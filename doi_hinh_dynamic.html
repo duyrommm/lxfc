@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đội Hình Tiêu Biểu</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f3d0f;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 20px 12px;
+    min-height: 100vh;
+  }
+
+  .container { width: 100%; max-width: 520px; }
+
+  /* ── Title ── */
+  .title-bar { text-align: center; margin-bottom: 14px; }
+  .title-bar h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; color: #FFD700;
+    letter-spacing: 3px; font-weight: 400; line-height: 1;
+  }
+  .meta {
+    color: rgba(255,255,255,0.5);
+    font-size: 10px; margin-top: 4px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ── Field ── */
+  .field-outer {
+    background: #1e7a1e;
+    border-radius: 12px;
+    padding: 14px 10px;
+    border: 3px solid rgba(255,255,255,0.15);
+    position: relative;
+    min-height: 540px;
+  }
+  .field-lines {
+    position: absolute; inset: 0;
+    pointer-events: none; border-radius: 10px; overflow: hidden;
+  }
+  .field-lines::before {
+    content: '';
+    position: absolute; top: 50%; left: 8%; right: 8%;
+    height: 1px; background: rgba(255,255,255,0.18);
+  }
+  .field-lines::after {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 70px; height: 70px;
+    border: 1.5px solid rgba(255,255,255,0.18); border-radius: 50%;
+  }
+  .goal-top {
+    width: 56px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: none; border-radius: 0 0 4px 4px;
+    margin: 0 auto 10px;
+  }
+  .goal-bottom {
+    width: 56px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-bottom: none; border-radius: 4px 4px 0 0;
+    margin: 10px auto 0;
+  }
+
+  /* ── Rows ── */
+  .row {
+    display: flex; justify-content: center;
+    align-items: flex-start; gap: 6px;
+    padding: 8px 0; position: relative; z-index: 1;
+  }
+  .player {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 5px;
+    width: 80px; cursor: default;
+  }
+  .avatar-wrap { position: relative; }
+  .avatar {
+    width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    border: 2.5px solid rgba(255,255,255,0.45);
+    letter-spacing: 0.5px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .player:hover .avatar {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .score-badge {
+    position: absolute; bottom: -3px; right: -3px;
+    background: #FFD700; color: #1a1a1a;
+    font-size: 9px; font-weight: 700;
+    border-radius: 8px; padding: 1px 5px;
+    border: 1.5px solid rgba(0,0,0,0.15); white-space: nowrap;
+  }
+  .pname {
+    color: #fff; font-size: 10px; font-weight: 600;
+    text-align: center; line-height: 1.25;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  }
+  .ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; }
+
+  .gk  .avatar { background: #c77d0a; border-color: #FFD700; }
+  .def .avatar { background: #1a5fa8; }
+  .mid .avatar { background: #7b1fa2; }
+  .fwd .avatar { background: #c62828; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; justify-content: center;
+    gap: 14px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center;
+    gap: 5px; font-size: 10px; color: rgba(255,255,255,0.65);
+  }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Loading / Error ── */
+  .state-msg {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    color: rgba(255,255,255,0.6); font-size: 13px;
+  }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #FFD700;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Tooltip ── */
+  #tooltip {
+    position: fixed;
+    background: rgba(10,30,10,0.92); color: #fff;
+    font-size: 12px; padding: 8px 12px; border-radius: 7px;
+    pointer-events: none; z-index: 999;
+    border: 1px solid rgba(255,215,0,0.4);
+    display: none; line-height: 1.6; max-width: 180px;
+  }
+  #tooltip.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     ⚠️  THAY URL DƯỚI ĐÂY bằng Web App URL
+         sau khi deploy Apps Script
+     ═══════════════════════════════════════════ -->
+<script>
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQYo-KuDCJBB7KWiI8EdJBzfHnqxZZvv6bRSHFcIFQbV2FhTya6ictYcSKb0lLTUxR2IzNlGS3O5jAOLJ0iQXDD-xyoDqOeAjvtUIIDsfj4bHiVavGmiToMk0gJlyeRo34R-zEalbSlSW7Tfc1_AwwNuw02EYAw84h2kEOAkhtT-Fo2zVUdmejFSPN9iTBDuslbDLIHfmHDJfR9lD24wGPJJy_rA7EgBH5_GkBhSiFdZ0jiCAubVVIMfbpwMvjms2FJgp2S5raPTDbBpM4U_ofHLILteA&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
+</script>
+
+<div class="container">
+  <div class="title-bar">
+    <h1>ĐỘI HÌNH TIÊU BIỂU</h1>
+    <div class="meta" id="meta">Đang tải...</div>
+  </div>
+
+  <div class="field-outer" id="field">
+    <div class="field-lines"></div>
+    <div class="state-msg" id="loading">
+      <div class="spinner"></div>
+      <span>Đang tải dữ liệu...</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#c77d0a"></span>Thủ môn</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#1a5fa8"></span>Hậu vệ</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#7b1fa2"></span>Tiền vệ</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#c62828"></span>Tiền đạo</div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+// Tạo initials từ tên (VD: "Thành CM" → "TCM")
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+}
+
+// Map vị trí → CSS class
+function posClass(viTri) {
+  if (viTri === "Thủ môn")      return "gk";
+  if (viTri.startsWith("Hậu") || viTri.startsWith("Trung")) return "def";
+  if (viTri.startsWith("Tiền vệ")) return "mid";
+  if (viTri.startsWith("Tiền đạo")) return "fwd";
+  return "mid";
+}
+
+// Label ngắn cho vị trí
+function posLabel(viTri) {
+  const map = {
+    "Thủ môn":       "Thủ Môn",
+    "Trung vệ":      "Trung Vệ",
+    "Hậu vệ cánh":   "HV Cánh",
+    "Tiền vệ TT":    "TV Trung Tâm",
+    "Tiền vệ cánh":  "TV Cánh",
+    "Tiền đạo":      "Tiền Đạo"
+  };
+  return map[viTri] || viTri;
+}
+
+function makePlayer(p) {
+  const cls  = posClass(p.viTri);
+  const ini  = initials(p.ten);
+  const lbl  = posLabel(p.viTri);
+  const div  = document.createElement('div');
+  div.className = `player ${cls}`;
+  div.innerHTML = `
+    <div class="avatar-wrap">
+      <div class="avatar">${ini}</div>
+      <span class="score-badge">${p.diem}đ</span>
+    </div>
+    <div class="pname">${p.ten}</div>
+    <div class="ppos">${lbl}</div>`;
+
+  // Tooltip
+  div.addEventListener('mouseenter', e => {
+    tip.innerHTML = `<strong style="color:#FFD700">${p.ten}</strong><br>${p.stt} · ${p.viTri}<br>Tổng điểm: <strong>${p.diem}đ</strong>`;
+    tip.classList.add('show');
+  });
+  div.addEventListener('mousemove', e => {
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top  = (e.clientY - 40) + 'px';
+  });
+  div.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  return div;
+}
+
+function makeRow(players) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  players.forEach(p => row.appendChild(makePlayer(p)));
+  return row;
+}
+
+function renderField(data) {
+  const field = document.getElementById('field');
+  field.innerHTML = '<div class="field-lines"></div>';
+
+  const s = data.squad;
+
+  field.appendChild(Object.assign(document.createElement('div'), { className: 'goal-top' }));
+
+  // FWD
+  if (s["Tiền đạo"]?.length)
+    field.appendChild(makeRow(s["Tiền đạo"]));
+
+  // MID: cánh T + TT + cánh P  (sắp theo cánh trái / TT / cánh phải)
+  const midAll = [
+    ...(s["Tiền vệ cánh"] ? [s["Tiền vệ cánh"][0]] : []),
+    ...(s["Tiền vệ TT"]   ? s["Tiền vệ TT"].slice(0,2) : []),
+    ...(s["Tiền vệ cánh"] ? [s["Tiền vệ cánh"][1]].filter(Boolean) : [])
+  ].filter(Boolean);
+  if (midAll.length) field.appendChild(makeRow(midAll));
+
+  // 3rd TV TT (nếu có)
+  if (s["Tiền vệ TT"]?.length >= 3) {
+    field.appendChild(makeRow([s["Tiền vệ TT"][2]]));
+  }
+
+  // DEF: HV cánh T + Trung vệ + HV cánh P
+  const defAll = [
+    ...(s["Hậu vệ cánh"] ? [s["Hậu vệ cánh"][0]] : []),
+    ...(s["Trung vệ"]     ? s["Trung vệ"] : []),
+    ...(s["Hậu vệ cánh"] ? [s["Hậu vệ cánh"][1]].filter(Boolean) : [])
+  ].filter(Boolean);
+  if (defAll.length) field.appendChild(makeRow(defAll));
+
+  // GK
+  if (s["Thủ môn"]?.length)
+    field.appendChild(makeRow(s["Thủ môn"]));
+
+  field.appendChild(Object.assign(document.createElement('div'), { className: 'goal-bottom' }));
+
+  // Meta
+  document.getElementById('meta').textContent =
+    `Sơ đồ ${data.formation} · Cập nhật: ${data.updatedAt}`;
+}
+
+// ── Fetch data ──
+const tip = document.getElementById('tooltip');
+
+fetch(API_URL)
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(data => renderField(data))
+  .catch(err => {
+    document.getElementById('field').innerHTML = `
+      <div class="state-msg">
+        <span style="font-size:22px">⚠️</span>
+        <span>Không tải được dữ liệu.<br>Kiểm tra lại API_URL.</span>
+        <span style="font-size:10px;opacity:0.5">${err.message}</span>
+      </div>`;
+    document.getElementById('meta').textContent = 'Lỗi kết nối';
+  });
+</script>
+</body>
+</html>

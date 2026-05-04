@@ -17,75 +17,17 @@
     min-height: 100vh;
   }
 
-  /* ── Layout wrapper ── */
+  /* ── Outer layout: sân + dự bị ── */
   .page-wrap {
     width: 100%;
-    max-width: 820px;
+    max-width: 860px;
     display: flex;
     gap: 14px;
     align-items: flex-start;
   }
 
-  .container { flex: 1; min-width: 0; }
-
-  /* ── Bench panel ── */
-  .bench-panel {
-    width: 130px;
-    flex-shrink: 0;
-    background: rgba(0,0,0,0.25);
-    border: 2px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    padding: 10px 8px;
-    margin-top: 48px; /* align với field */
-  }
-  .bench-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 13px; font-weight: 600;
-    color: #FFD700; letter-spacing: 1px;
-    text-align: center; margin-bottom: 10px;
-    text-transform: uppercase;
-  }
-  .bench-list { display: flex; flex-direction: column; gap: 6px; }
-
-  /* Bench player row (horizontal: avatar + text) */
-  .bench-player {
-    display: flex; align-items: center; gap: 7px;
-    cursor: default; padding: 3px 4px; border-radius: 6px;
-    transition: background 0.15s;
-  }
-  .bench-player:hover { background: rgba(255,255,255,0.08); }
-
-  .bench-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    overflow: hidden; flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,0.35);
-    background: #145214;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-  }
-  .bench-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-  .bench-avatar img.error { display: none; }
-  .bench-avatar img.error ~ .ini { display: flex; }
-  .bench-avatar .ini { font-size: 9px; font-weight: 700; color: #fff; display: none; }
-
-  .bench-gk  .bench-avatar { border-color: #FFD700; }
-  .bench-def .bench-avatar { border-color: #5b9fe8; }
-  .bench-mid .bench-avatar { border-color: #c97de8; }
-  .bench-fwd .bench-avatar { border-color: #e87070; }
-
-  .bench-info { min-width: 0; }
-  .bench-name {
-    color: #fff; font-size: 10px; font-weight: 700;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    line-height: 1.2;
-  }
-  .bench-pos { color: rgba(255,255,255,0.5); font-size: 9px; }
-  .bench-score { color: #FFD700; font-size: 9px; font-weight: 700; }
-
-  .bench-divider {
-    height: 1px; background: rgba(255,255,255,0.1);
-    margin: 4px 0;
-  }
+  /* ── Phần sân (trái) ── */
+  .main-col { flex: 1; min-width: 0; }
 
   .title-bar { text-align: center; margin-bottom: 14px; }
   .title-bar h1 {
@@ -93,7 +35,10 @@
     font-size: 26px; color: #FFD700;
     letter-spacing: 2px; font-weight: 700; line-height: 1;
   }
-  .meta { color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+  .meta {
+    color: rgba(255,255,255,0.5); font-size: 10px;
+    margin-top: 4px; letter-spacing: 1px; text-transform: uppercase;
+  }
 
   /* ── Field ── */
   .field-outer {
@@ -104,8 +49,6 @@
     position: relative;
     min-height: 560px;
   }
-
-  /* Field markings */
   .field-lines { position: absolute; inset: 0; pointer-events: none; border-radius: 10px; overflow: hidden; }
   .field-lines::before {
     content: ''; position: absolute; top: 50%; left: 8%; right: 8%;
@@ -117,7 +60,6 @@
     width: 70px; height: 70px;
     border: 1.5px solid rgba(255,255,255,0.18); border-radius: 50%;
   }
-  /* Penalty boxes */
   .field-outer::before {
     content: ''; position: absolute; top: 14px; left: 50%;
     transform: translateX(-50%);
@@ -132,57 +74,37 @@
     border: 1.5px solid rgba(255,255,255,0.15);
     border-bottom: none; border-radius: 6px 6px 0 0;
   }
+  .goal-top { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top: none; border-radius: 0 0 4px 4px; margin: 0 auto 8px; }
+  .goal-bot { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-bottom: none; border-radius: 4px 4px 0 0; margin: 8px auto 0; }
 
-  .goal-top  { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top: none; border-radius: 0 0 4px 4px; margin: 0 auto 8px; }
-  .goal-bot  { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-bottom: none; border-radius: 4px 4px 0 0; margin: 8px auto 0; }
-
-  /* ── Player card ── */
+  /* ── Hàng cầu thủ trên sân ── */
   .row {
     display: flex; justify-content: center;
     align-items: flex-start; gap: 6px;
     padding: 6px 0; position: relative; z-index: 1;
   }
-
   .player {
     display: flex; flex-direction: column;
-    align-items: center; gap: 4px; width: 82px;
-    cursor: default;
+    align-items: center; gap: 4px; width: 82px; cursor: default;
   }
-
   .avatar-wrap { position: relative; }
-
   .avatar {
     width: 54px; height: 54px; border-radius: 50%;
     overflow: hidden;
     border: 3px solid rgba(255,255,255,0.5);
     background: #145214;
     display: flex; align-items: center; justify-content: center;
-    transition: transform 0.15s, box-shadow 0.15s;
-    flex-shrink: 0;
+    transition: transform 0.15s, box-shadow 0.15s; flex-shrink: 0;
   }
-  .player:hover .avatar {
-    transform: scale(1.1);
-    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
-  }
-  .avatar img {
-    width: 100%; height: 100%;
-    object-fit: cover; object-position: top center;
-    display: block;
-  }
-  /* Fallback initials khi ảnh lỗi */
-  .avatar .ini {
-    font-size: 11px; font-weight: 700; color: #fff;
-    letter-spacing: 0.5px; display: none;
-  }
-  .avatar img.error { display: none; }
-  .avatar img.error ~ .ini { display: flex; }
-
-  /* Border màu theo vị trí */
+  .player:hover .avatar { transform: scale(1.1); box-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .avatar .ini { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; display: none; }
+  .avatar img.err { display: none; }
+  .avatar img.err ~ .ini { display: flex; }
   .gk  .avatar { border-color: #FFD700; }
   .def .avatar { border-color: #5b9fe8; }
   .mid .avatar { border-color: #c97de8; }
   .fwd .avatar { border-color: #e87070; }
-
   .score-badge {
     position: absolute; bottom: -3px; right: -3px;
     background: #FFD700; color: #1a1a1a;
@@ -190,21 +112,19 @@
     border-radius: 8px; padding: 1px 5px;
     border: 1.5px solid rgba(0,0,0,0.15); white-space: nowrap;
   }
-
   .pname {
     color: #fff; font-size: 10px; font-weight: 700;
     text-align: center; line-height: 1.25;
-    font-family: 'Be Vietnam Pro', sans-serif;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
   }
-  .ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; font-family: 'Be Vietnam Pro', sans-serif; }
+  .ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; }
 
   /* ── Legend ── */
   .legend { display: flex; justify-content: center; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: rgba(255,255,255,0.65); }
-  .legend-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
-  /* ── Loading/Error ── */
+  /* ── Loading / Error ── */
   .state-msg {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
@@ -218,6 +138,64 @@
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Panel dự bị (phải) ── */
+  .bench-panel {
+    width: 138px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.28);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 8px;
+    margin-top: 48px;
+  }
+  .bench-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px; font-weight: 700; color: #FFD700;
+    letter-spacing: 1px; text-align: center;
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .bench-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .bench-player {
+    display: flex; align-items: center; gap: 7px;
+    padding: 4px 5px; border-radius: 6px; cursor: default;
+    transition: background 0.15s;
+  }
+  .bench-player:hover { background: rgba(255,255,255,0.08); }
+
+  .bench-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: #145214;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bench-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .bench-avatar .ini { font-size: 9px; font-weight: 700; color: #fff; display: none; }
+  .bench-avatar img.err { display: none; }
+  .bench-avatar img.err ~ .ini { display: flex; }
+  .bench-gk  .bench-avatar { border-color: #FFD700; }
+  .bench-def .bench-avatar { border-color: #5b9fe8; }
+  .bench-mid .bench-avatar { border-color: #c97de8; }
+  .bench-fwd .bench-avatar { border-color: #e87070; }
+
+  .bench-info { min-width: 0; flex: 1; }
+  .bench-name {
+    color: #fff; font-size: 10px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .bench-sub {
+    display: flex; align-items: center; gap: 4px; margin-top: 1px;
+  }
+  .bench-pos { color: rgba(255,255,255,0.45); font-size: 8.5px; }
+  .bench-score { color: #FFD700; font-size: 8.5px; font-weight: 700; }
+
+  .bench-sep {
+    height: 1px; background: rgba(255,255,255,0.08);
+    margin: 4px 2px;
+  }
 
   /* ── Tooltip ── */
   #tooltip {
@@ -238,87 +216,93 @@
 </script>
 
 <div class="page-wrap">
-<div class="container">
-  <div class="title-bar">
-    <h1>ĐỘI HÌNH TIÊU BIỂU</h1>
-    <div class="meta" id="meta">Đang tải...</div>
-  </div>
 
-  <div class="field-outer" id="field">
-    <div class="field-lines"></div>
-    <div class="state-msg" id="loading">
-      <div class="spinner"></div>
-      <span>Đang tải dữ liệu...</span>
+  <!-- ── Cột sân ── -->
+  <div class="main-col">
+    <div class="title-bar">
+      <h1>ĐỘI HÌNH TIÊU BIỂU</h1>
+      <div class="meta" id="meta">Đang tải...</div>
+    </div>
+
+    <div class="field-outer" id="field">
+      <div class="field-lines"></div>
+      <div class="state-msg" id="loading">
+        <div class="spinner"></div>
+        <span>Đang tải dữ liệu...</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#FFD700"></span>Thủ môn</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#5b9fe8"></span>Hậu vệ</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#c97de8"></span>Tiền vệ</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e87070"></span>Tiền đạo</div>
     </div>
   </div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#FFD700"></span>Thủ môn</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#5b9fe8"></span>Hậu vệ</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#c97de8"></span>Tiền vệ</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#e87070"></span>Tiền đạo</div>
+  <!-- ── Panel dự bị ── -->
+  <div class="bench-panel" id="bench-panel" style="display:none">
+    <div class="bench-title">🔄 Dự Bị</div>
+    <div class="bench-list" id="bench-list"></div>
   </div>
-</div>
-
-<!-- Bench panel -->
-<div class="bench-panel" id="bench-panel" style="display:none">
-  <div class="bench-title">🔄 Dự Bị</div>
-  <div class="bench-list" id="bench-list"></div>
-</div>
 
 </div>
 
 <div id="tooltip"></div>
 
 <script>
-function initials(name) {
+// ── Helpers ──
+function ini(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
 }
-function posClass(viTri) {
-  if (viTri === "Thủ môn")          return "gk";
+function cls(viTri) {
+  if (viTri === "Thủ môn")                              return "gk";
   if (viTri.includes("Hậu") || viTri.includes("Trung")) return "def";
-  if (viTri.includes("Tiền vệ"))    return "mid";
-  if (viTri.includes("Tiền đạo"))   return "fwd";
+  if (viTri.includes("Tiền vệ"))                        return "mid";
+  if (viTri.includes("Tiền đạo"))                       return "fwd";
   return "mid";
 }
-function posLabel(viTri) {
-  return { "Thủ môn":"Thủ Môn","Trung vệ":"Trung Vệ","Hậu vệ cánh":"HV Cánh",
-           "Tiền vệ TT":"TV Trung Tâm","Tiền vệ cánh":"TV Cánh","Tiền đạo":"Tiền Đạo" }[viTri] || viTri;
+function lbl(viTri) {
+  return ({
+    "Thủ môn":      "Thủ Môn",
+    "Trung vệ":     "Trung Vệ",
+    "Hậu vệ cánh":  "HV Cánh",
+    "Tiền vệ TT":   "TV Trung Tâm",
+    "Tiền vệ cánh": "TV Cánh",
+    "Tiền đạo":     "Tiền Đạo"
+  })[viTri] || viTri;
+}
+function avatarImg(p, size) {
+  return p.avatar
+    ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('err')">`
+    : '';
 }
 
 const tip = document.getElementById('tooltip');
-
-function makePlayer(p) {
-  const cls = posClass(p.viTri);
-  const ini = initials(p.ten);
-  const div = document.createElement('div');
-  div.className = `player ${cls}`;
-
-  // Avatar: dùng ảnh thật nếu có, fallback về initials
-  const avatarHTML = p.avatar
-    ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('error')">`
-    : '';
-
-  div.innerHTML = `
-    <div class="avatar-wrap">
-      <div class="avatar">
-        ${avatarHTML}
-        <span class="ini">${ini}</span>
-      </div>
-      <span class="score-badge">${p.diem}đ</span>
-    </div>
-    <div class="pname">${p.ten}</div>
-    <div class="ppos">${posLabel(p.viTri)}</div>`;
-
-  div.addEventListener('mouseenter', e => {
+function bindTip(el, p) {
+  el.addEventListener('mouseenter', () => {
     tip.innerHTML = `<strong style="color:#FFD700">${p.ten}</strong><br>${p.stt} · ${p.viTri}<br>Tổng điểm: <strong>${p.diem}đ</strong>`;
     tip.classList.add('show');
   });
-  div.addEventListener('mousemove', e => {
+  el.addEventListener('mousemove', e => {
     tip.style.left = (e.clientX + 14) + 'px';
     tip.style.top  = (e.clientY - 40) + 'px';
   });
-  div.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+}
+
+// ── Tạo card cầu thủ trên sân ──
+function makePlayer(p) {
+  const div = document.createElement('div');
+  div.className = `player ${cls(p.viTri)}`;
+  div.innerHTML = `
+    <div class="avatar-wrap">
+      <div class="avatar">${avatarImg(p)}<span class="ini">${ini(p.ten)}</span></div>
+      <span class="score-badge">${p.diem}đ</span>
+    </div>
+    <div class="pname">${p.ten}</div>
+    <div class="ppos">${lbl(p.viTri)}</div>`;
+  bindTip(div, p);
   return div;
 }
 
@@ -329,6 +313,7 @@ function makeRow(players) {
   return row;
 }
 
+// ── Render sân chính ──
 function renderField(data) {
   const field = document.getElementById('field');
   field.innerHTML = '<div class="field-lines"></div>';
@@ -336,23 +321,23 @@ function renderField(data) {
 
   field.appendChild(Object.assign(document.createElement('div'), { className: 'goal-top' }));
 
-  // FWD
+  // Tiền đạo
   if (s["Tiền đạo"]?.length)
     field.appendChild(makeRow(s["Tiền đạo"]));
 
-  // MID: cánh T | TT x2 | cánh P
+  // Tiền vệ: cánh T | TT x2 | cánh P
   const midRow = [
     s["Tiền vệ cánh"]?.[0],
-    ...(s["Tiền vệ TT"]?.slice(0,2) || []),
+    ...(s["Tiền vệ TT"]?.slice(0, 2) || []),
     s["Tiền vệ cánh"]?.[1]
   ].filter(Boolean);
   if (midRow.length) field.appendChild(makeRow(midRow));
 
-  // 3rd TV TT
+  // Tiền vệ TT thứ 3
   if (s["Tiền vệ TT"]?.length >= 3)
     field.appendChild(makeRow([s["Tiền vệ TT"][2]]));
 
-  // DEF: HV cánh T | Trung vệ x2 | HV cánh P
+  // Hậu vệ: cánh T | Trung vệ x2 | cánh P
   const defRow = [
     s["Hậu vệ cánh"]?.[0],
     ...(s["Trung vệ"] || []),
@@ -360,7 +345,7 @@ function renderField(data) {
   ].filter(Boolean);
   if (defRow.length) field.appendChild(makeRow(defRow));
 
-  // GK
+  // Thủ môn
   if (s["Thủ môn"]?.length)
     field.appendChild(makeRow(s["Thủ môn"]));
 
@@ -370,10 +355,68 @@ function renderField(data) {
     `Sơ đồ ${data.formation} · Cập nhật: ${data.updatedAt}`;
 }
 
-// ── Fetch ──
+// ── Render panel dự bị ──
+function renderBench(data) {
+  const b = data.bench;
+  if (!b) return;
+
+  // Thứ tự hiển thị trong panel
+  const ORDER = [
+    "Thủ môn",
+    "Hậu vệ cánh",
+    "Trung vệ",
+    "Tiền vệ TT",
+    "Tiền vệ cánh",
+    "Tiền đạo"
+  ];
+
+  const list = document.getElementById('bench-list');
+  list.innerHTML = '';
+  let first = true;
+
+  ORDER.forEach(pos => {
+    const players = b[pos];
+    if (!players || players.length === 0) return;
+
+    // Dòng phân cách giữa các nhóm vị trí
+    if (!first) {
+      const sep = document.createElement('div');
+      sep.className = 'bench-sep';
+      list.appendChild(sep);
+    }
+    first = false;
+
+    players.forEach(p => {
+      const posClass = cls(p.viTri);
+      const div = document.createElement('div');
+      div.className = `bench-player bench-${posClass}`;
+      div.innerHTML = `
+        <div class="bench-avatar">
+          ${avatarImg(p)}
+          <span class="ini">${ini(p.ten)}</span>
+        </div>
+        <div class="bench-info">
+          <div class="bench-name">${p.ten}</div>
+          <div class="bench-sub">
+            <span class="bench-pos">${lbl(p.viTri)}</span>
+            <span class="bench-score">${p.diem}đ</span>
+          </div>
+        </div>`;
+      bindTip(div, p);
+      list.appendChild(div);
+    });
+  });
+
+  document.getElementById('bench-panel').style.display = 'block';
+}
+
+// ── Fetch dữ liệu từ Apps Script ──
 fetch(API_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(data => renderField(data))
+  .then(data => {
+    renderField(data);
+    renderBench(data);
+  })
   .catch(err => {
     document.getElementById('field').innerHTML = `
       <div class="state-msg">

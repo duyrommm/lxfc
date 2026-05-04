@@ -147,7 +147,8 @@
     border: 2px solid rgba(255,255,255,0.12);
     border-radius: 10px;
     padding: 10px 8px;
-    margin-top: 48px;
+    /* Căn top ngang với field: title-bar h1(26px) + line-height + meta(10px) + gap + margin-bottom(14px) ≈ 62px */
+    margin-top: 62px;
   }
   .bench-title {
     font-family: 'Oswald', sans-serif;
@@ -410,12 +411,28 @@ function renderBench(data) {
   document.getElementById('bench-panel').style.display = 'block';
 }
 
+// ── Căn bench panel top ngang với field ──
+function alignBench() {
+  const field = document.getElementById('field');
+  const bench = document.getElementById('bench-panel');
+  const wrap  = document.querySelector('.page-wrap');
+  if (!field || !bench || !wrap) return;
+  const offset = field.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
+  bench.style.marginTop = Math.max(0, offset) + 'px';
+}
+
 // ── Fetch dữ liệu từ Apps Script ──
 fetch(API_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
     renderField(data);
     renderBench(data);
+    // Đợi font load xong rồi mới đo để chính xác
+    document.fonts.ready.then(() => {
+      alignBench();
+      // Gọi thêm lần nữa sau 200ms phòng trường hợp layout chưa ổn định
+      setTimeout(alignBench, 200);
+    });
   })
   .catch(err => {
     document.getElementById('field').innerHTML = `
@@ -426,6 +443,8 @@ fetch(API_URL)
       </div>`;
     document.getElementById('meta').textContent = 'Lỗi kết nối';
   });
+window.addEventListener('resize', alignBench);
+
 </script>
 </body>
 </html>

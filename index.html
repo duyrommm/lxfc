@@ -17,13 +17,81 @@
     min-height: 100vh;
   }
 
-  .container { width: 100%; max-width: 540px; }
+  /* ── Layout wrapper ── */
+  .page-wrap {
+    width: 100%;
+    max-width: 820px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .container { flex: 1; min-width: 0; }
+
+  /* ── Bench panel ── */
+  .bench-panel {
+    width: 130px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.25);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 8px;
+    margin-top: 48px; /* align với field */
+  }
+  .bench-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: #FFD700; letter-spacing: 1px;
+    text-align: center; margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .bench-list { display: flex; flex-direction: column; gap: 6px; }
+
+  /* Bench player row (horizontal: avatar + text) */
+  .bench-player {
+    display: flex; align-items: center; gap: 7px;
+    cursor: default; padding: 3px 4px; border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .bench-player:hover { background: rgba(255,255,255,0.08); }
+
+  .bench-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.35);
+    background: #145214;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .bench-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .bench-avatar img.error { display: none; }
+  .bench-avatar img.error ~ .ini { display: flex; }
+  .bench-avatar .ini { font-size: 9px; font-weight: 700; color: #fff; display: none; }
+
+  .bench-gk  .bench-avatar { border-color: #FFD700; }
+  .bench-def .bench-avatar { border-color: #5b9fe8; }
+  .bench-mid .bench-avatar { border-color: #c97de8; }
+  .bench-fwd .bench-avatar { border-color: #e87070; }
+
+  .bench-info { min-width: 0; }
+  .bench-name {
+    color: #fff; font-size: 10px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .bench-pos { color: rgba(255,255,255,0.5); font-size: 9px; }
+  .bench-score { color: #FFD700; font-size: 9px; font-weight: 700; }
+
+  .bench-divider {
+    height: 1px; background: rgba(255,255,255,0.1);
+    margin: 4px 0;
+  }
 
   .title-bar { text-align: center; margin-bottom: 14px; }
   .title-bar h1 {
     font-family: 'Oswald', sans-serif;
-    font-size: 28px; color: #FFD700;
-    letter-spacing: 3px; font-weight: 400; line-height: 1;
+    font-size: 26px; color: #FFD700;
+    letter-spacing: 2px; font-weight: 700; line-height: 1;
   }
   .meta { color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 
@@ -124,11 +192,12 @@
   }
 
   .pname {
-    color: #fff; font-size: 10px; font-weight: 600;
+    color: #fff; font-size: 10px; font-weight: 700;
     text-align: center; line-height: 1.25;
+    font-family: 'Be Vietnam Pro', sans-serif;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
   }
-  .ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; }
+  .ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; font-family: 'Be Vietnam Pro', sans-serif; }
 
   /* ── Legend ── */
   .legend { display: flex; justify-content: center; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
@@ -165,9 +234,10 @@
 
 <!-- ⚠️ THAY URL BÊN DƯỚI bằng Web App URL sau khi deploy Apps Script -->
 <script>
-  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRoc_8CrQpKUObvNdZe4bjCJoIacJKP2herhlRN6UPdloGUhLGO_UmpNNrowp7dL4b34B_MRdHRYm1FNjXVLS7tc4bn2SgN5QmVc14fvl7L86088qapnkonqAMNbYTjU4ohLWiNYBRfeXhyRLp95rAUhQtH13_Lj0s2D_YEpvdvmGlvMWzt8bGuw1W5ZHkvj1yY_FPaiKzK-EnmaWO-3rqc-rq3zPGUBiN-vAch_m-1lIMKrNKmFhBxzYPCXwYewIzD39iOR1mm2W-VseMizRKitXU6og&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnT9ljXX17Psl7Iuvc3QA9KbV73EdUh8OPUQ5B4R-n2VXXHMed6rb6UP6Igi9uZHkgqpXDc6XgbED9UblFN4z3NMPDq2TFtqg1niPcwts2i3wM1trehbiOcrbL43xSWJRTDtFK0a2dk_Gkxk49hb0swr6tBzwxzVQ7V3AFGpdMqHt3jKjstJ_UwrSALfe-0J425wA1e6QTl0se1XEbV1q1M_NMxc5ci1w2_E7FD7GjGMf29UdvKiNrQtHMybGZuxM6CdBXImNz6mt8Fx9zfxQGOoPGRllw&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
 </script>
 
+<div class="page-wrap">
 <div class="container">
   <div class="title-bar">
     <h1>ĐỘI HÌNH TIÊU BIỂU</h1>
@@ -188,6 +258,14 @@
     <div class="legend-item"><span class="legend-dot" style="background:#c97de8"></span>Tiền vệ</div>
     <div class="legend-item"><span class="legend-dot" style="background:#e87070"></span>Tiền đạo</div>
   </div>
+</div>
+
+<!-- Bench panel -->
+<div class="bench-panel" id="bench-panel" style="display:none">
+  <div class="bench-title">🔄 Dự Bị</div>
+  <div class="bench-list" id="bench-list"></div>
+</div>
+
 </div>
 
 <div id="tooltip"></div>

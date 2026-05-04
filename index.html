@@ -213,7 +213,7 @@
 
 <!-- ⚠️ THAY URL BÊN DƯỚI bằng Web App URL sau khi deploy Apps Script -->
 <script>
-  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnT9ljXX17Psl7Iuvc3QA9KbV73EdUh8OPUQ5B4R-n2VXXHMed6rb6UP6Igi9uZHkgqpXDc6XgbED9UblFN4z3NMPDq2TFtqg1niPcwts2i3wM1trehbiOcrbL43xSWJRTDtFK0a2dk_Gkxk49hb0swr6tBzwxzVQ7V3AFGpdMqHt3jKjstJ_UwrSALfe-0J425wA1e6QTl0se1XEbV1q1M_NMxc5ci1w2_E7FD7GjGMf29UdvKiNrQtHMybGZuxM6CdBXImNz6mt8Fx9zfxQGOoPGRllw&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnReqVG-7FHQm_GhbG__Q-iMmo6Eyu6nP3QlzkzF-djrjG-1jR4vgbKHX9YzTwifD02Coqy4w_88a0XpSPzRiDksdMunMQPBnpSPO0FV_qndTt8YmsVnAaQHzkIWSv75WNrfBpfEJuErprMjul4YsN254W4CTpWogJ98FabVpgiAezWRsnJgZ_oZJm0YYy6QoWa4MVTitNd1DmDHLhVzQNEB3nOIhfyZyHnhWcpY3IAbeyu8FGp4tQshabr-hm9QURzGBs3CdlJWxNmLT2Z3WTwxYyclQQ&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
 </script>
 
 <div class="page-wrap">
@@ -282,7 +282,12 @@ function avatarImg(p, size) {
 const tip = document.getElementById('tooltip');
 function bindTip(el, p) {
   el.addEventListener('mouseenter', () => {
-    tip.innerHTML = `<strong style="color:#FFD700">${p.ten}</strong><br>${p.stt} · ${p.viTri}<br>Tổng điểm: <strong>${p.diem}đ</strong>`;
+    tip.innerHTML = `
+      <strong style="color:#FFD700">${p.ten}</strong><br>
+      ${p.stt} · ${p.viTri}<br>
+      <span style="color:#adf5ad">⚡ Chuyên cần: <strong>${p.chuyenCan}đ</strong></span><br>
+      <span style="color:#a8d8ff">🎯 Chuyên môn: <strong>${p.chuyenMon}đ</strong></span><br>
+      Tổng điểm: <strong style="color:#FFD700">${p.diem}đ</strong>`;
     tip.classList.add('show');
   });
   el.addEventListener('mousemove', e => {

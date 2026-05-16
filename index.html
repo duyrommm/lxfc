@@ -282,8 +282,18 @@ body {
   padding: 2px 8px; border-radius: 8px; margin-top: 4px;
   border: 1px solid rgba(255,215,0,0.3);
 }
+/* ── Tooltip ── */
+#tooltip {
+  position: fixed;
+  background: rgba(10,30,10,0.95); color: #fff;
+  font-size: 12px; padding: 9px 13px; border-radius: 8px;
+  pointer-events: none; z-index: 500;
+  border: 1px solid rgba(255,215,0,0.35);
+  display: none; line-height: 1.7; max-width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#tooltip.show { display: block; }
 </style>
-</head>
 <body>
 
 <!-- ⚠️ THAY URL BÊN DƯỚI bằng Web App URL sau khi deploy Apps Script -->
@@ -321,6 +331,8 @@ body {
   </div>
 
 </div>
+
+<div id="tooltip"></div>
 
 <!-- ── Modal Stats ── -->
 <div class="modal-overlay" id="modal-overlay">
@@ -382,6 +394,25 @@ function lbl(v) {
   return ({"Thủ môn":"Thủ Môn","Trung vệ":"Trung Vệ","Hậu vệ cánh":"HV Cánh",
            "Tiền vệ TT":"TV Trung Tâm","Tiền vệ cánh":"TV Cánh","Tiền đạo":"Tiền Đạo"})[v]||v;
 }
+
+// ── Tooltip ──
+const tip = document.getElementById('tooltip');
+function showTip(e, p) {
+  tip.innerHTML = `
+    <strong style="color:#FFD700">${p.ten}</strong><br>
+    ${p.stt} · ${p.viTri}<br>
+    <span style="color:#adf5ad">⚡ Chuyên cần: <strong>${p.chuyenCan}đ</strong></span><br>
+    <span style="color:#a8d8ff">🎯 Chuyên môn: <strong>${p.chuyenMon}đ</strong></span><br>
+    <span style="color:#ffd0a8">⚽ Thi đấu: <strong>${p.hoatDong}đ</strong></span><br>
+    Tổng điểm: <strong style="color:#FFD700">${p.diem}đ</strong>`;
+  tip.classList.add('show');
+  moveTip(e);
+}
+function moveTip(e) {
+  tip.style.left = (e.clientX + 14) + 'px';
+  tip.style.top  = (e.clientY - 50) + 'px';
+}
+function hideTip() { tip.classList.remove('show'); }
 
 // Track selected element
 let selectedEl = null;
@@ -489,7 +520,11 @@ function makePlayer(p, isStarter) {
     </div>
     <div class="pname">${p.ten}</div>
     <div class="ppos">${lbl(p.viTri)}</div>`;
+  div.addEventListener('mouseenter', e => showTip(e, p));
+  div.addEventListener('mousemove',  e => moveTip(e));
+  div.addEventListener('mouseleave', hideTip);
   div.addEventListener('click', () => {
+    hideTip();
     if (selectedEl) selectedEl.classList.remove('selected');
     selectedEl = div;
     div.classList.add('selected');
@@ -567,7 +602,11 @@ function renderBench(data) {
             <span class="bench-score">${p.diem}đ</span>
           </div>
         </div>`;
+      div.addEventListener('mouseenter', e => showTip(e, p));
+      div.addEventListener('mousemove',  e => moveTip(e));
+      div.addEventListener('mouseleave', hideTip);
       div.addEventListener('click', () => {
+        hideTip();
         if (selectedEl) selectedEl.classList.remove('selected');
         selectedEl = div;
         div.classList.add('selected');

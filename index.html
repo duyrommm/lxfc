@@ -196,12 +196,12 @@ body {
 }
 .modal-overlay.show .modal { transform: translateY(0) scale(1); }
 
-/* Header */
 .modal-header {
   background: linear-gradient(135deg, #1a5c1a 0%, #0d3d0d 100%);
-  padding: 20px 20px 14px;
+  padding: 18px 20px;
   display: flex; align-items: center; gap: 16px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: relative;
 }
 .modal-avatar {
   width: 72px; height: 72px; border-radius: 50%;
@@ -215,14 +215,24 @@ body {
 .modal-avatar img.err { display: none; }
 .modal-avatar img.err ~ .ini { display: flex; }
 
-.modal-id-badge {
-  position: absolute; top: 14px; right: 48px;
-  background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.5);
-  font-size: 10px; padding: 2px 8px; border-radius: 10px;
-}
+.modal-info { flex: 1; min-width: 0; }
 .modal-name { font-family: 'Oswald', sans-serif; font-size: 20px; color: #FFD700; font-weight: 700; line-height: 1.1; }
-.modal-pos { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 3px; }
-.modal-so-ao { color: #FFD700; font-size: 11px; margin-top: 2px; font-weight: 600; }
+.modal-pos  { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 3px; }
+.modal-so-ao {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
+  color: #FFD700; font-size: 11px; font-weight: 700;
+  padding: 2px 9px; border-radius: 10px; margin-top: 5px;
+}
+
+/* Số áo badge — góc trên phải avatar, không đè header */
+.modal-id-badge {
+  position: absolute; top: 10px; right: 46px;
+  background: rgba(0,0,0,0.5); color: rgba(255,255,255,0.55);
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
 
 /* Close btn */
 .modal-close {

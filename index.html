@@ -354,12 +354,13 @@ body {
       <div class="modal-avatar" id="modal-avatar">
         <span class="ini" id="modal-ini"></span>
       </div>
-      <div>
+      <div class="modal-info">
         <div class="modal-name" id="modal-name"></div>
-        <div class="modal-pos" id="modal-pos"></div>
+        <div class="modal-pos"  id="modal-pos"></div>
         <div class="modal-so-ao" id="modal-so-ao"></div>
-        <div id="modal-role-badge"></div>
+        <div id="modal-role-badge" style="margin-top:5px"></div>
       </div>
+      <div class="modal-id-badge" id="modal-id"></div>
     </div>
 
     <!-- Tổng điểm breakdown -->
@@ -436,7 +437,7 @@ function openModal(p, isStarter) {
   document.getElementById('modal-id').textContent    = p.stt;
   document.getElementById('modal-name').textContent  = p.ten;
   document.getElementById('modal-pos').textContent   = p.viTri;
-  document.getElementById('modal-so-ao').textContent = p.soAo ? '⃣ Số áo: ' + p.soAo : '';
+  document.getElementById('modal-so-ao').textContent = p.soAo ? '#' + p.soAo : '';
   document.getElementById('modal-ini').textContent   = ini(p.ten);
   document.getElementById('ms-cc').textContent    = p.chuyenCan  ?? '-';
   document.getElementById('ms-cm').textContent    = p.chuyenMon  ?? '-';

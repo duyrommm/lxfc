@@ -89,7 +89,7 @@ body {
 }
 .player:hover .avatar { transform: scale(1.1); box-shadow: 0 4px 18px rgba(0,0,0,0.6); }
 .player.selected .avatar { box-shadow: 0 0 0 3px #FFD700, 0 4px 18px rgba(255,215,0,0.5); transform: scale(1.08); }
-.avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatar .ini { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; display: none; }
 .avatar img.err { display: none; }
 .avatar img.err ~ .ini { display: flex; }
@@ -210,7 +210,7 @@ body {
   background: #145214;
   display: flex; align-items: center; justify-content: center;
 }
-.modal-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; display: block; }
+.modal-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .modal-avatar .ini { font-size: 18px; font-weight: 700; color: #fff; }
 .modal-avatar img.err { display: none; }
 .modal-avatar img.err ~ .ini { display: flex; }
@@ -435,6 +435,15 @@ function lbl(v) {
   return ({"Thủ môn":"Thủ Môn","Trung vệ":"Trung Vệ","Hậu vệ cánh":"HV Cánh",
            "Tiền vệ TT":"TV Trung Tâm","Tiền vệ cánh":"TV Cánh","Tiền đạo":"Tiền Đạo"})[v]||v;
 }
+// Cloudinary face-crop transform
+function faceUrl(url, size) {
+  size = size || 200;
+  if (!url) return '';
+  if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+    return url.replace('/upload/', `/upload/c_fill,g_face,w_${size},h_${size}/`);
+  }
+  return url;
+}
 
 // ── Tooltip ──
 const tip = document.getElementById('tooltip');
@@ -480,15 +489,19 @@ function openModal(p, isStarter) {
     ? '<span class="starter-badge">⚡ Đội hình chính</span>'
     : '<span class="bench-badge">🔄 Dự bị</span>';
 
-  // Avatar
+  // Avatar — dùng Cloudinary transformation để crop khuôn mặt tự động
   const av = document.getElementById('modal-avatar');
-  // Remove existing img if any
   const oldImg = av.querySelector('img');
   if (oldImg) oldImg.remove();
   if (p.avatar) {
+    // Cloudinary face-crop cho modal (size lớn hơn)
+    let avatarUrl = faceUrl(p.avatar, 200);
     const img = document.createElement('img');
-    img.src = p.avatar;
-    img.onerror = function(){ this.classList.add('err'); };
+    img.src = avatarUrl;
+    img.onerror = function(){
+      if (this.src !== p.avatar) { this.src = p.avatar; }
+      else { this.classList.add('err'); }
+    };
     av.prepend(img);
   }
 
@@ -609,7 +622,7 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); 
 function makePlayer(p, isStarter) {
   const div = document.createElement('div');
   div.className = `player ${cls(p.viTri)}`;
-  const avatarHTML = p.avatar ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('err')">` : '';
+  const avatarHTML = p.avatar ? `<img src="${faceUrl(p.avatar,120)}" alt="${p.ten}" onerror="if(this.src.includes('upload/c_')){this.src='${p.avatar}'}else{this.classList.add('err')}">` : '';
   div.innerHTML = `
     <div class="avatar-wrap">
       <div class="avatar">${avatarHTML}<span class="ini">${ini(p.ten)}</span></div>
@@ -692,7 +705,7 @@ function renderBench(data) {
       const pc = cls(p.viTri);
       const div = document.createElement('div');
       div.className = `bench-player bench-${pc}`;
-      const avatarHTML = p.avatar ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('err')">` : '';
+      const avatarHTML = p.avatar ? `<img src="${faceUrl(p.avatar,80)}" alt="${p.ten}" onerror="if(this.src.includes('upload/c_')){this.src='${p.avatar}'}else{this.classList.add('err')}">` : '';
       div.innerHTML = `
         <div class="bench-avatar">${avatarHTML}<span class="ini">${ini(p.ten)}</span></div>
         <div class="bench-info">

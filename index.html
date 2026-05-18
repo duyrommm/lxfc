@@ -559,18 +559,21 @@ function renderField(data) {
 
   field.appendChild(Object.assign(document.createElement('div'), {className:'goal-top'}));
 
-  // 4-5-1: Tiền đạo (1)
+  // Tiền đạo (1)
   if (s["Tiền đạo"]?.length)         field.appendChild(makeRow(s["Tiền đạo"], true));
 
-  // Tiền vệ (5): cánh T | TT x3 | cánh P
+  // Hàng tiền vệ: cánh T | TT x2 | cánh P
   const midRow = [
     s["Tiền vệ cánh"]?.[0],
-    ...(s["Tiền vệ TT"]?.slice(0,3) || []),
+    ...(s["Tiền vệ TT"]?.slice(0,2) || []),
     s["Tiền vệ cánh"]?.[1]
   ].filter(Boolean);
   if (midRow.length)                  field.appendChild(makeRow(midRow, true));
 
-  // Hậu vệ (4): HV cánh T | Trung vệ x2 | HV cánh P
+  // TV TT thứ 3 (hàng giữa riêng — tạo hình 4-1-4-1)
+  if (s["Tiền vệ TT"]?.length >= 3)  field.appendChild(makeRow([s["Tiền vệ TT"][2]], true));
+
+  // Hậu vệ: HV cánh T | Trung vệ x2 | HV cánh P
   const defRow = [
     s["Hậu vệ cánh"]?.[0],
     ...(s["Trung vệ"] || []),
@@ -578,7 +581,7 @@ function renderField(data) {
   ].filter(Boolean);
   if (defRow.length)                  field.appendChild(makeRow(defRow, true));
 
-  // Thủ môn (1)
+  // Thủ môn
   if (s["Thủ môn"]?.length)          field.appendChild(makeRow(s["Thủ môn"], true));
 
   field.appendChild(Object.assign(document.createElement('div'), {className:'goal-bot'}));

@@ -1,252 +1,736 @@
-function getBestXI() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
- 
-  // ══════════════════════════════════════════
-  // 1. Đọc DATA_LOG — tính các chỉ số nâng cao theo từng cầu thủ
-  //    B=Ngày, D=Tỉ số, E=Tên, J=GF, K=GP(pen thắng), L=AS
-  //    O=AG(bàn thua), F=Trạng thái
-  // ══════════════════════════════════════════
-  const logSheet = ss.getSheetByName("DATA_LOG");
-  const logData  = logSheet.getDataRange().getValues();
- 
-  // Map ngày → { tySo, tongBanThang, tongBanThua } của trận đó
-  // Đồng thời map tên → danh sách ngày có tham gia
-  const matchByDate = {}; // dateKey → { tyso, ourGoals, theirGoals, players: Set }
-  const playerDates = {}; // ten → [dateKey, ...]
- 
-  for (let i = 1; i < logData.length; i++) {
-    const r      = logData[i];
-    const ngay   = r[1]; // Cột B
-    const tyso   = String(r[3] || '').trim(); // Cột D: "4 - 1"
-    const ten    = String(r[4] || '').trim(); // Cột E
-    const status = String(r[5] || '').trim(); // Cột F
-    if (!ngay || !ten) continue;
- 
-    const dateKey = Utilities.formatDate(new Date(ngay), "Asia/Ho_Chi_Minh", "yyyy-MM-dd");
- 
-    // Build match info
-    if (!matchByDate[dateKey]) {
-      const parts = tyso.split('-').map(s => parseInt(s.trim()) || 0);
-      matchByDate[dateKey] = {
-        tyso:       tyso,
-        ourGoals:   parts[0] || 0,
-        theirGoals: parts[1] || 0,
-        players:    new Set()
-      };
-    }
-    if (status === "Tham gia" || status === "Trễ") {
-      matchByDate[dateKey].players.add(ten);
-      if (!playerDates[ten]) playerDates[ten] = [];
-      if (!playerDates[ten].includes(dateKey)) playerDates[ten].push(dateKey);
-    }
-  }
- 
-  // Tính chỉ số nâng cao cho từng cầu thủ
-  const advancedStats = {}; // ten → stats
- 
-  // Đọc lại DATA_LOG để tính GF, AS, AG theo từng trận của cầu thủ
-  // Map: dateKey → { playerGF, playerAS, playerAG }
-  const playerMatchStats = {}; // ten → { dateKey → { gf, gp, ast, ag } }
-  for (let i = 1; i < logData.length; i++) {
-    const r    = logData[i];
-    const ngay = r[1];
-    const ten  = String(r[4] || '').trim();
-    if (!ngay || !ten) continue;
-    const dateKey = Utilities.formatDate(new Date(ngay), "Asia/Ho_Chi_Minh", "yyyy-MM-dd");
-    if (!playerMatchStats[ten]) playerMatchStats[ten] = {};
-    playerMatchStats[ten][dateKey] = {
-      gf:  Number(r[9])  || 0,  // Cột J
-      gp:  Number(r[10]) || 0,  // Cột K
-      ast: Number(r[11]) || 0,  // Cột L
-      ag:  Number(r[14]) || 0   // Cột O
-    };
-  }
- 
-  // Với mỗi cầu thủ đã tham gia, tính:
-  // - tỉ lệ thắng: số trận thắng (ourGoals > theirGoals) / tổng trận tham gia
-  // - đóng góp bàn thắng: (gf+ast) / tổng ourGoals của các trận đó
-  // - giữ sạch lưới: số trận theirGoals == 0 / tổng trận tham gia
-  // - số trận vắng + số ngày kể từ trận cuối
-  const allDates = Object.keys(matchByDate).sort(); // tất cả ngày thi đấu
-  const today = new Date();
- 
-  Object.keys(playerDates).forEach(ten => {
-    const dates = playerDates[ten].sort();
-    let wins = 0, draws = 0, cleanSheets = 0;
-    let totalOurGoals = 0, playerContrib = 0;
- 
-    dates.forEach(dk => {
-      const m   = matchByDate[dk];
-      const ps  = (playerMatchStats[ten] || {})[dk] || {};
-      if (m.ourGoals > m.theirGoals)       wins++;
-      else if (m.ourGoals === m.theirGoals) draws++;
-      if (m.theirGoals === 0)              cleanSheets++;
-      totalOurGoals += m.ourGoals;
-      playerContrib += (ps.gf || 0) + (ps.ast || 0);
-    });
- 
-    const totalPlayed = dates.length;
-    const winRate     = totalPlayed > 0 ? Math.round((wins / totalPlayed) * 100) : 0;
-    const cleanRate   = totalPlayed > 0 ? Math.round((cleanSheets / totalPlayed) * 100) : 0;
-    const contribRate = totalOurGoals > 0 ? Math.round((playerContrib / totalOurGoals) * 100) : 0;
- 
-    // Số trận vắng: số trận trong allDates sau ngày tham gia cuối cùng
-    const lastDate    = dates[dates.length - 1];
-    const missedMatches = allDates.filter(d => d > lastDate);
-    const lastDateObj = new Date(lastDate);
-    const diffDays    = Math.floor((today - lastDateObj) / (1000 * 60 * 60 * 24));
- 
-    advancedStats[ten] = {
-      winRate:     winRate,
-      draws:       draws,
-      losses:      totalPlayed - wins - draws,
-      cleanRate:   cleanRate,
-      contribRate: contribRate,
-      missedCount: missedMatches.length,
-      missedDays:  diffDays,
-      lastMatch:   lastDate
-    };
-  });
- 
-  // ══════════════════════════════════════════
-  // 2. Đọc CAU_THU — stats + bday + avatar
-  //    A=ID, B=Họ tên, C=Số áo, D=Vị trí,
-  //    E=Trạng thái, F=BDay, G=Benefit, H=Công nợ,
-  //    I=Trận, J=MVP, K=TR, L=BM, M=GF, N=GP,
-  //    O=AS, P=YC, Q=RC, R=AG, S=AP, T=OG,
-  //    U=TR:Trễ, V=Avt
-  // ══════════════════════════════════════════
-  const cauThuSheet = ss.getSheetByName("CAU_THU");
-  const cauThuData  = cauThuSheet.getDataRange().getValues();
- 
-  const playerMap = {};
-  for (let i = 1; i < cauThuData.length; i++) {
-    const r   = cauThuData[i];
-    const ten = String(r[1] || '').trim();
-    if (!ten) continue;
- 
-    // BDay: chỉ lấy ngày/tháng
-    let bday = '';
-    if (r[5] instanceof Date) {
-      bday = Utilities.formatDate(r[5], "Asia/Ho_Chi_Minh", "dd/MM");
-    }
- 
-    playerMap[ten] = {
-      soAo:    r[2]  || '',
-      bday:    bday,
-      tran:    Number(r[8])  || 0,
-      mvp:     Number(r[9])  || 0,
-      tr:      Number(r[10]) || 0,
-      bm:      Number(r[11]) || 0,
-      gf:      Number(r[12]) || 0,
-      gp:      Number(r[13]) || 0,
-      ast:     Number(r[14]) || 0,
-      yc:      Number(r[15]) || 0,
-      rc:      Number(r[16]) || 0,
-      ag:      Number(r[17]) || 0,
-      ap:      Number(r[18]) || 0,
-      og:      Number(r[19]) || 0,
-      treTran: Number(r[20]) || 0,
-      avatar:  String(r[21] || '').trim()
-    };
-  }
- 
-  // ══════════════════════════════════════════
-  // 3. Đọc POINT
-  // ══════════════════════════════════════════
-  const pointSheet = ss.getSheetByName("POINT");
-  const rows       = pointSheet.getDataRange().getValues();
- 
-  const COL_STT        = 0;
-  const COL_TEN        = 1;
-  const COL_VITRI      = 2;
-  const COL_CHUYEN_CAN = 3;
-  const COL_CHUYEN_MON = 4;
-  const COL_HOAT_DONG  = 6;
-  const COL_DIEM       = 7;
- 
-  // ══════════════════════════════════════════
-  // 4. Formation
-  // ══════════════════════════════════════════
-  const STARTING = {
-    "Thủ môn":      1,
-    "Hậu vệ cánh":  2,
-    "Trung vệ":     2,
-    "Tiền vệ TT":   3,
-    "Tiền vệ cánh": 2,
-    "Tiền đạo":     1
-  };
-  const BENCH_COUNT = {
-    "Thủ môn":      1,
-    "Hậu vệ cánh":  2,
-    "Trung vệ":     1,
-    "Tiền vệ TT":   2,
-    "Tiền vệ cánh": 2,
-    "Tiền đạo":     2
-  };
- 
-  // ══════════════════════════════════════════
-  // 5. Build player objects
-  // ══════════════════════════════════════════
-  const byPos = {};
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[COL_TEN]) continue;
-    const ten    = String(r[COL_TEN]).trim();
-    const pos    = String(r[COL_VITRI]).trim();
-    const extra  = playerMap[ten]     || {};
-    const adv    = advancedStats[ten] || {};
-    if (!byPos[pos]) byPos[pos] = [];
-    byPos[pos].push({
-      stt:        String(r[COL_STT]).trim(),
-      ten:        ten,
-      viTri:      pos,
-      chuyenCan:  Number(r[COL_CHUYEN_CAN]) || 0,
-      chuyenMon:  Number(r[COL_CHUYEN_MON]) || 0,
-      hoatDong:   Number(r[COL_HOAT_DONG])  || 0,
-      diem:       Number(r[COL_DIEM])        || 0,
-      // CAU_THU stats
-      soAo:       extra.soAo    || '',
-      bday:       extra.bday    || '',
-      avatar:     extra.avatar  || '',
-      tran:       extra.tran    || 0,
-      mvp:        extra.mvp     || 0,
-      bm:         extra.bm      || 0,
-      gf:         extra.gf      || 0,
-      gp:         extra.gp      || 0,
-      ast:        extra.ast     || 0,
-      yc:         extra.yc      || 0,
-      rc:         extra.rc      || 0,
-      ag:         extra.ag      || 0,
-      ap:         extra.ap      || 0,
-      og:         extra.og      || 0,
-      treTran:    extra.treTran || 0,
-      // Advanced stats từ DATA_LOG
-      winRate:     adv.winRate     ?? null,
-      cleanRate:   adv.cleanRate   ?? null,
-      contribRate: adv.contribRate ?? null,
-      missedCount: adv.missedCount ?? 0,
-      missedDays:  adv.missedDays  ?? 0
-    });
-  }
- 
-  // ══════════════════════════════════════════
-  // 6. Sắp xếp & tách chính thức / dự bị
-  // ══════════════════════════════════════════
-  const squad = {};
-  const bench = {};
-  Object.keys(STARTING).forEach(pos => {
-    const sorted = (byPos[pos] || []).sort((a, b) => b.diem - a.diem);
-    const s = STARTING[pos];
-    const b = BENCH_COUNT[pos] || 0;
-    squad[pos] = sorted.slice(0, s);
-    bench[pos] = sorted.slice(s, s + b);
-  });
- 
-  return {
-    updatedAt: Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm"),
-    formation: "4-5-1",
-    squad: squad,
-    bench: bench
-  };
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đội Hình Tiêu Biểu</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f3d0f;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 20px 12px;
+  min-height: 100vh;
 }
+
+/* ── Layout ── */
+.page-wrap {
+  width: 100%; max-width: 880px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.main-col { flex: 1; min-width: 0; }
+
+/* ── Title ── */
+.title-bar { text-align: center; margin-bottom: 14px; }
+.title-bar h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 26px; color: #FFD700;
+  letter-spacing: 2px; font-weight: 700; line-height: 1;
+}
+.meta { color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── Field ── */
+.field-outer {
+  background: #1e7a1e; border-radius: 12px;
+  padding: 14px 10px;
+  border: 3px solid rgba(255,255,255,0.15);
+  position: relative; min-height: 560px;
+}
+.field-lines { position: absolute; inset: 0; pointer-events: none; border-radius: 10px; overflow: hidden; }
+.field-lines::before {
+  content: ''; position: absolute; top: 50%; left: 8%; right: 8%;
+  height: 1px; background: rgba(255,255,255,0.18);
+}
+.field-lines::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 70px; height: 70px;
+  border: 1.5px solid rgba(255,255,255,0.18); border-radius: 50%;
+}
+.field-outer::before {
+  content: ''; position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%);
+  width: 160px; height: 55px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-top: none; border-radius: 0 0 6px 6px;
+}
+.field-outer::after {
+  content: ''; position: absolute; bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  width: 160px; height: 55px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-bottom: none; border-radius: 6px 6px 0 0;
+}
+.goal-top { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-top: none; border-radius: 0 0 4px 4px; margin: 0 auto 8px; }
+.goal-bot { width: 56px; height: 12px; border: 2px solid rgba(255,255,255,0.35); border-bottom: none; border-radius: 4px 4px 0 0; margin: 8px auto 0; }
+
+/* ── Player card ── */
+.row {
+  display: flex; justify-content: center;
+  align-items: flex-start; gap: 6px;
+  padding: 6px 0; position: relative; z-index: 1;
+}
+.player {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px; width: 82px; cursor: pointer;
+}
+.avatar-wrap { position: relative; }
+.avatar {
+  width: 54px; height: 54px; border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(255,255,255,0.5);
+  background: #145214;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s; flex-shrink: 0;
+}
+.player:hover .avatar { transform: scale(1.1); box-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+.player.selected .avatar { box-shadow: 0 0 0 3px #FFD700, 0 4px 18px rgba(255,215,0,0.5); transform: scale(1.08); }
+.avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.avatar .ini { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; display: none; }
+.avatar img.err { display: none; }
+.avatar img.err ~ .ini { display: flex; }
+.gk  .avatar { border-color: #FFD700; }
+.def .avatar { border-color: #5b9fe8; }
+.mid .avatar { border-color: #c97de8; }
+.fwd .avatar { border-color: #e87070; }
+.score-badge {
+  position: absolute; bottom: -3px; right: -3px;
+  background: #FFD700; color: #1a1a1a;
+  font-size: 9px; font-weight: 700;
+  border-radius: 8px; padding: 1px 5px;
+  border: 1.5px solid rgba(0,0,0,0.15); white-space: nowrap;
+}
+.pname { color: #fff; font-size: 10px; font-weight: 700; text-align: center; line-height: 1.25; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+.ppos { color: rgba(255,255,255,0.55); font-size: 9px; text-align: center; }
+
+/* ── Legend ── */
+.legend { display: flex; justify-content: center; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: rgba(255,255,255,0.65); }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Loading / Error ── */
+.state-msg {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  color: rgba(255,255,255,0.6); font-size: 13px;
+}
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #FFD700; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Bench panel ── */
+.bench-panel {
+  width: 138px; flex-shrink: 0;
+  background: rgba(0,0,0,0.28);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 10px 8px;
+}
+.bench-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 700; color: #FFD700;
+  letter-spacing: 1px; text-align: center;
+  margin-bottom: 10px; text-transform: uppercase;
+}
+.bench-list { display: flex; flex-direction: column; gap: 2px; }
+.bench-player {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 5px; border-radius: 6px; cursor: pointer;
+  transition: background 0.15s;
+}
+.bench-player:hover { background: rgba(255,255,255,0.08); }
+.bench-player.selected { background: rgba(255,215,0,0.12); }
+.bench-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: #145214;
+  display: flex; align-items: center; justify-content: center;
+}
+.bench-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.bench-avatar .ini { font-size: 9px; font-weight: 700; color: #fff; display: none; }
+.bench-avatar img.err { display: none; }
+.bench-avatar img.err ~ .ini { display: flex; }
+.bench-gk  .bench-avatar { border-color: #FFD700; }
+.bench-def .bench-avatar { border-color: #5b9fe8; }
+.bench-mid .bench-avatar { border-color: #c97de8; }
+.bench-fwd .bench-avatar { border-color: #e87070; }
+.bench-info { min-width: 0; flex: 1; }
+.bench-name { color: #fff; font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.bench-sub { display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+.bench-pos { color: rgba(255,255,255,0.45); font-size: 8.5px; }
+.bench-score { color: #FFD700; font-size: 8.5px; font-weight: 700; }
+.bench-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px; }
+
+/* ════════════════════════════════
+   MODAL STATS
+   ════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: #0d2e0d;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  width: 360px; max-width: 95vw;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.22s;
+  position: relative;
+}
+.modal-overlay.show .modal { transform: translateY(0) scale(1); }
+
+.modal-header {
+  background: linear-gradient(135deg, #1a5c1a 0%, #0d3d0d 100%);
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+}
+.modal-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  border: 3px solid #FFD700;
+  background: #145214;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; display: block; }
+.modal-avatar .ini { font-size: 18px; font-weight: 700; color: #fff; }
+.modal-avatar img.err { display: none; }
+.modal-avatar img.err ~ .ini { display: flex; }
+
+.modal-info { flex: 1; min-width: 0; }
+.modal-name { font-family: 'Oswald', sans-serif; font-size: 20px; color: #FFD700; font-weight: 700; line-height: 1.1; }
+.modal-pos-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;
+}
+.modal-pos  { color: rgba(255,255,255,0.6); font-size: 11px; }
+.modal-so-ao {
+  display: inline-flex; align-items: center;
+  background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
+  color: #FFD700; font-size: 11px; font-weight: 700;
+  padding: 1px 8px; border-radius: 10px;
+}
+
+/* Số áo badge — góc trên phải avatar, không đè header */
+.modal-id-badge {
+  position: absolute; top: 10px; right: 46px;
+  background: rgba(0,0,0,0.5); color: rgba(255,255,255,0.55);
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Close btn */
+.modal-close {
+  position: absolute; top: 12px; right: 14px;
+  background: rgba(255,255,255,0.1); border: none;
+  color: #fff; width: 28px; height: 28px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; line-height: 28px; text-align: center;
+  transition: background 0.15s;
+}
+.modal-close:hover { background: rgba(255,255,255,0.2); }
+
+/* Score summary */
+.modal-scores {
+  display: flex; gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.score-block {
+  flex: 1; padding: 12px 6px; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.score-block:last-child { border-right: none; }
+.score-val { font-family: 'Oswald', sans-serif; font-size: 22px; color: #FFD700; font-weight: 700; line-height: 1; }
+.score-label { color: rgba(255,255,255,0.45); font-size: 9px; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Stat bars */
+.modal-bars { padding: 14px 18px; }
+.bar-row { margin-bottom: 10px; }
+.bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.bar-label { color: rgba(255,255,255,0.7); font-size: 11px; }
+.bar-val { color: #fff; font-size: 11px; font-weight: 700; }
+.bar-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+/* Stats grid */
+.modal-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.stat-cell {
+  background: #0d2e0d;
+  padding: 10px 6px; text-align: center;
+}
+.stat-val { font-family: 'Oswald', sans-serif; font-size: 18px; color: #fff; font-weight: 600; line-height: 1; }
+.stat-val.highlight { color: #FFD700; }
+.stat-lbl { color: rgba(255,255,255,0.4); font-size: 8.5px; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Bench badge in modal */
+.bench-badge {
+  display: inline-block; background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 10px;
+  padding: 2px 8px; border-radius: 8px; margin-top: 4px;
+}
+.starter-badge {
+  display: inline-block; background: rgba(255,215,0,0.15);
+  color: #FFD700; font-size: 10px;
+  padding: 2px 8px; border-radius: 8px; margin-top: 4px;
+  border: 1px solid rgba(255,215,0,0.3);
+}
+/* ── Advanced stats section ── */
+.modal-advanced {
+  padding: 12px 18px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.adv-card {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.adv-label { color: rgba(255,255,255,0.45); font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; }
+.adv-val   { color: #fff; font-size: 14px; font-weight: 700; font-family: 'Oswald', sans-serif; }
+.adv-val.good  { color: #4caf50; }
+.adv-val.warn  { color: #ff9800; }
+.adv-val.neutral { color: #90caf9; }
+.adv-sub   { color: rgba(255,255,255,0.35); font-size: 9px; }
+</style>
+#tooltip {
+  position: fixed;
+  background: rgba(10,30,10,0.95); color: #fff;
+  font-size: 12px; padding: 9px 13px; border-radius: 8px;
+  pointer-events: none; z-index: 500;
+  border: 1px solid rgba(255,215,0,0.35);
+  display: none; line-height: 1.7; max-width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#tooltip.show { display: block; }
+</style>
+<body>
+
+<!-- ⚠️ THAY URL BÊN DƯỚI bằng Web App URL sau khi deploy Apps Script -->
+<script>
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRjGPLYpAL7wXkE3dm0zdNw0WrOq--tNIZRLUjyls3-GIZynhjk-Jwo7iNy_trUcSn_0uMbhiT2gnp2J-3GdoJ9WMGljlPGefkzwhGoh0o2kwkaPxor6RRaqXnsRndcarDvfittUGZLm7JvkbLl4gkhSO72UV3ubfA9vp16vx8Sled1c8fjkFE7laaGPt1Bl4sBE-0xO2_7PEz2zAVz6Kc82tTku0q94v8TZOJrsVlHfxniLMvukBCyFqHbUezgIOOzCBzQcjyhLBCD03HTVbcOmW7cqg&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
+</script>
+
+<div class="page-wrap">
+
+  <!-- ── Sân chính ── -->
+  <div class="main-col">
+    <div class="title-bar">
+      <h1>ĐỘI HÌNH TIÊU BIỂU</h1>
+      <div class="meta" id="meta">Đang tải...</div>
+    </div>
+    <div class="field-outer" id="field">
+      <div class="field-lines"></div>
+      <div class="state-msg" id="loading">
+        <div class="spinner"></div>
+        <span>Đang tải dữ liệu...</span>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#FFD700"></span>Thủ môn</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#5b9fe8"></span>Hậu vệ</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#c97de8"></span>Tiền vệ</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e87070"></span>Tiền đạo</div>
+    </div>
+  </div>
+
+  <!-- ── Dự bị ── -->
+  <div class="bench-panel" id="bench-panel" style="display:none">
+    <div class="bench-title">🔄 Dự Bị</div>
+    <div class="bench-list" id="bench-list"></div>
+  </div>
+
+</div>
+
+<div id="tooltip"></div>
+
+<!-- ── Modal Stats ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-id-badge" id="modal-id"></div>
+
+    <div class="modal-header">
+      <div class="modal-avatar" id="modal-avatar">
+        <span class="ini" id="modal-ini"></span>
+      </div>
+      <div class="modal-info">
+        <div class="modal-name" id="modal-name"></div>
+        <div class="modal-pos-row">
+          <span class="modal-pos"  id="modal-pos"></span>
+          <span class="modal-so-ao" id="modal-so-ao"></span>
+        </div>
+        <div id="modal-role-badge" style="margin-top:6px"></div>
+      </div>
+      <div class="modal-id-badge" id="modal-id"></div>
+    </div>
+
+    <!-- Tổng điểm breakdown -->
+    <div class="modal-scores">
+      <div class="score-block">
+        <div class="score-val" id="ms-cc"></div>
+        <div class="score-label">Chuyên Cần</div>
+      </div>
+      <div class="score-block">
+        <div class="score-val" id="ms-cm"></div>
+        <div class="score-label">Chuyên Môn</div>
+      </div>
+      <div class="score-block">
+        <div class="score-val" id="ms-hd"></div>
+        <div class="score-label">Thi Đấu</div>
+      </div>
+      <div class="score-block" style="background:rgba(255,215,0,0.06)">
+        <div class="score-val" style="color:#FFD700" id="ms-total"></div>
+        <div class="score-label" style="color:rgba(255,215,0,0.6)">Tổng Điểm</div>
+      </div>
+    </div>
+
+    <!-- Bar charts -->
+    <div class="modal-bars" id="modal-bars"></div>
+
+    <!-- Advanced stats -->
+    <div class="modal-advanced" id="modal-advanced"></div>
+
+  </div>
+</div>
+
+<script>
+// ── Helpers ──
+function ini(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,3); }
+function cls(v) {
+  if (v==="Thủ môn") return "gk";
+  if (v.includes("Hậu")||v.includes("Trung")) return "def";
+  if (v.includes("Tiền vệ")) return "mid";
+  if (v.includes("Tiền đạo")) return "fwd";
+  return "mid";
+}
+function lbl(v) {
+  return ({"Thủ môn":"Thủ Môn","Trung vệ":"Trung Vệ","Hậu vệ cánh":"HV Cánh",
+           "Tiền vệ TT":"TV Trung Tâm","Tiền vệ cánh":"TV Cánh","Tiền đạo":"Tiền Đạo"})[v]||v;
+}
+
+// ── Tooltip ──
+const tip = document.getElementById('tooltip');
+function showTip(e, p) {
+  tip.innerHTML = `
+    <strong style="color:#FFD700">${p.ten}</strong><br>
+    ${p.stt} · ${p.viTri}<br>
+    <span style="color:#adf5ad">⚡ Chuyên cần: <strong>${p.chuyenCan}đ</strong></span><br>
+    <span style="color:#a8d8ff">🎯 Chuyên môn: <strong>${p.chuyenMon}đ</strong></span><br>
+    <span style="color:#ffd0a8">⚽ Thi đấu: <strong>${p.hoatDong}đ</strong></span><br>
+    Tổng điểm: <strong style="color:#FFD700">${p.diem}đ</strong>`;
+  tip.classList.add('show');
+  moveTip(e);
+}
+function moveTip(e) {
+  tip.style.left = (e.clientX + 14) + 'px';
+  tip.style.top  = (e.clientY - 50) + 'px';
+}
+function hideTip() { tip.classList.remove('show'); }
+
+// Track selected element
+let selectedEl = null;
+
+// ── Open modal ──
+function openModal(p, isStarter) {
+  // Deselect previous
+  if (selectedEl) selectedEl.classList.remove('selected');
+
+  // Modal fields
+  document.getElementById('modal-id').textContent    = p.stt;
+  document.getElementById('modal-name').textContent  = p.ten;
+  document.getElementById('modal-pos').textContent   = p.viTri;
+  document.getElementById('modal-so-ao').textContent = p.soAo ? '#' + p.soAo : '';
+  document.getElementById('modal-ini').textContent   = ini(p.ten);
+  document.getElementById('ms-cc').textContent    = p.chuyenCan  ?? '-';
+  document.getElementById('ms-cm').textContent    = p.chuyenMon  ?? '-';
+  document.getElementById('ms-hd').textContent    = p.hoatDong   ?? '-';
+  document.getElementById('ms-total').textContent = p.diem       ?? '-';
+
+  // Role badge
+  const badge = document.getElementById('modal-role-badge');
+  badge.innerHTML = isStarter
+    ? '<span class="starter-badge">⚡ Đội hình chính</span>'
+    : '<span class="bench-badge">🔄 Dự bị</span>';
+
+  // Avatar
+  const av = document.getElementById('modal-avatar');
+  // Remove existing img if any
+  const oldImg = av.querySelector('img');
+  if (oldImg) oldImg.remove();
+  if (p.avatar) {
+    const img = document.createElement('img');
+    img.src = p.avatar;
+    img.onerror = function(){ this.classList.add('err'); };
+    av.prepend(img);
+  }
+
+  // Bar charts
+  const maxPts = 60; // estimated max for scale
+  const bars = [
+    { label: '⚡ Điểm Chuyên Cần', val: p.chuyenCan||0, max: 30, color: '#4caf50' },
+    { label: '🎯 Điểm Chuyên Môn', val: p.chuyenMon||0, max: 30, color: '#2196f3' },
+    { label: '⚽ Điểm Thi Đấu',    val: p.hoatDong||0,  max: 30, color: '#ff9800' },
+  ];
+  const barsEl = document.getElementById('modal-bars');
+  barsEl.innerHTML = bars.map(b => {
+    const pct = Math.min(100, Math.round((b.val / b.max) * 100));
+    return `<div class="bar-row">
+      <div class="bar-header">
+        <span class="bar-label">${b.label}</span>
+        <span class="bar-val">${b.val}đ</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:${b.color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Stat grid — thứ tự: Số Trận, MVP, Bàn Thắng, Kiến Tạo, Penalty, Thẻ Vàng, Thẻ Đỏ, Phản Lưới, Trận Trễ, Bom Hàng, Bàn Thua, Pen Thua
+  const stats = [
+    { lbl: 'Số Trận',   val: p.tran,     hi: false },
+    { lbl: 'MVP',       val: p.mvp,      hi: p.mvp > 0 },
+    { lbl: 'Bàn Thắng', val: p.gf,       hi: p.gf > 0 },
+    { lbl: 'Kiến Tạo',  val: p.ast,      hi: p.ast > 0 },
+    { lbl: 'Penalty',   val: p.gp,       hi: false },
+    { lbl: 'Thẻ Vàng',  val: p.yc,       hi: false },
+    { lbl: 'Thẻ Đỏ',    val: p.rc,       hi: p.rc > 0 },
+    { lbl: 'Phản Lưới', val: p.og,       hi: false },
+    { lbl: 'Trận Trễ',  val: p.treTran,  hi: false },
+    { lbl: 'Bom Hàng',  val: p.bm,       hi: false },
+    { lbl: 'Bàn Thua',  val: p.ag,       hi: false },
+    { lbl: 'Pen Thua',  val: p.ap,       hi: false },
+  ];
+  document.getElementById('modal-grid').innerHTML = stats.map(s =>
+    `<div class="stat-cell">
+      <div class="stat-val${s.hi?' highlight':''}">${s.val ?? '-'}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+    </div>`
+  ).join('');
+
+  // Advanced stats section
+  const isAttacker = ['Tiền đạo','Tiền vệ TT','Tiền vệ cánh'].includes(p.viTri);
+  const isDefender = ['Thủ môn','Trung vệ','Hậu vệ cánh'].includes(p.viTri);
+  const advEl = document.getElementById('modal-advanced');
+
+  const winCls   = p.winRate >= 60 ? 'good' : p.winRate >= 40 ? 'neutral' : 'warn';
+  const missedCls = p.missedCount === 0 ? 'good' : p.missedCount <= 1 ? 'neutral' : 'warn';
+
+  let advCards = `
+    <div class="adv-card">
+      <div class="adv-label">🎂 Sinh nhật</div>
+      <div class="adv-val neutral">${p.bday || '—'}</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-label">🏆 Tỉ lệ thắng</div>
+      <div class="adv-val ${winCls}">${p.winRate != null ? p.winRate + '%' : '—'}</div>
+      <div class="adv-sub">/${p.tran} trận tham gia</div>
+    </div>`;
+
+  if (isAttacker) {
+    const contribCls = p.contribRate >= 40 ? 'good' : p.contribRate >= 20 ? 'neutral' : 'warn';
+    advCards += `
+    <div class="adv-card">
+      <div class="adv-label">⚽ Đóng góp bàn thắng</div>
+      <div class="adv-val ${contribCls}">${p.contribRate != null ? p.contribRate + '%' : '—'}</div>
+      <div class="adv-sub">(bàn thắng + kiến tạo) / tổng bàn đội</div>
+    </div>`;
+  }
+  if (isDefender) {
+    const cleanCls = p.cleanRate >= 50 ? 'good' : p.cleanRate >= 30 ? 'neutral' : 'warn';
+    advCards += `
+    <div class="adv-card">
+      <div class="adv-label">🧤 Giữ sạch lưới</div>
+      <div class="adv-val ${cleanCls}">${p.cleanRate != null ? p.cleanRate + '%' : '—'}</div>
+      <div class="adv-sub">trận không thủng lưới</div>
+    </div>`;
+  }
+
+  advCards += `
+    <div class="adv-card">
+      <div class="adv-label">📅 Vắng mặt</div>
+      <div class="adv-val ${missedCls}">${p.missedCount} trận</div>
+      <div class="adv-sub">${p.missedDays} ngày kể từ trận cuối</div>
+    </div>`;
+
+  advEl.innerHTML = advCards;
+
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  if (selectedEl) { selectedEl.classList.remove('selected'); selectedEl = null; }
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+// ── Make player card (field) ──
+function makePlayer(p, isStarter) {
+  const div = document.createElement('div');
+  div.className = `player ${cls(p.viTri)}`;
+  const avatarHTML = p.avatar ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('err')">` : '';
+  div.innerHTML = `
+    <div class="avatar-wrap">
+      <div class="avatar">${avatarHTML}<span class="ini">${ini(p.ten)}</span></div>
+      <span class="score-badge">${p.diem}đ</span>
+    </div>
+    <div class="pname">${p.ten}</div>
+    <div class="ppos">${lbl(p.viTri)}</div>`;
+  div.addEventListener('mouseenter', e => showTip(e, p));
+  div.addEventListener('mousemove',  e => moveTip(e));
+  div.addEventListener('mouseleave', hideTip);
+  div.addEventListener('click', () => {
+    hideTip();
+    if (selectedEl) selectedEl.classList.remove('selected');
+    selectedEl = div;
+    div.classList.add('selected');
+    openModal(p, isStarter);
+  });
+  return div;
+}
+
+function makeRow(players, isStarter) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  players.filter(Boolean).forEach(p => row.appendChild(makePlayer(p, isStarter)));
+  return row;
+}
+
+// ── Render field ──
+function renderField(data) {
+  const field = document.getElementById('field');
+  field.innerHTML = '<div class="field-lines"></div>';
+  const s = data.squad;
+
+  field.appendChild(Object.assign(document.createElement('div'), {className:'goal-top'}));
+
+  // Tiền đạo (1)
+  if (s["Tiền đạo"]?.length)         field.appendChild(makeRow(s["Tiền đạo"], true));
+
+  // Hàng tiền vệ: cánh T | TT x2 | cánh P
+  const midRow = [
+    s["Tiền vệ cánh"]?.[0],
+    ...(s["Tiền vệ TT"]?.slice(0,2) || []),
+    s["Tiền vệ cánh"]?.[1]
+  ].filter(Boolean);
+  if (midRow.length)                  field.appendChild(makeRow(midRow, true));
+
+  // TV TT thứ 3 (hàng giữa riêng — tạo hình 4-1-4-1)
+  if (s["Tiền vệ TT"]?.length >= 3)  field.appendChild(makeRow([s["Tiền vệ TT"][2]], true));
+
+  // Hậu vệ: HV cánh T | Trung vệ x2 | HV cánh P
+  const defRow = [
+    s["Hậu vệ cánh"]?.[0],
+    ...(s["Trung vệ"] || []),
+    s["Hậu vệ cánh"]?.[1]
+  ].filter(Boolean);
+  if (defRow.length)                  field.appendChild(makeRow(defRow, true));
+
+  // Thủ môn
+  if (s["Thủ môn"]?.length)          field.appendChild(makeRow(s["Thủ môn"], true));
+
+  field.appendChild(Object.assign(document.createElement('div'), {className:'goal-bot'}));
+
+  document.getElementById('meta').textContent = `Sơ đồ ${data.formation} · Cập nhật: ${data.updatedAt}`;
+}
+
+// ── Render bench ──
+function renderBench(data) {
+  const b = data.bench;
+  if (!b) return;
+  const ORDER = ["Thủ môn","Hậu vệ cánh","Trung vệ","Tiền vệ TT","Tiền vệ cánh","Tiền đạo"];
+  const list = document.getElementById('bench-list');
+  list.innerHTML = '';
+  let first = true;
+  ORDER.forEach(pos => {
+    const players = b[pos];
+    if (!players?.length) return;
+    if (!first) { const sep=document.createElement('div'); sep.className='bench-sep'; list.appendChild(sep); }
+    first = false;
+    players.forEach(p => {
+      const pc = cls(p.viTri);
+      const div = document.createElement('div');
+      div.className = `bench-player bench-${pc}`;
+      const avatarHTML = p.avatar ? `<img src="${p.avatar}" alt="${p.ten}" onerror="this.classList.add('err')">` : '';
+      div.innerHTML = `
+        <div class="bench-avatar">${avatarHTML}<span class="ini">${ini(p.ten)}</span></div>
+        <div class="bench-info">
+          <div class="bench-name">${p.ten}</div>
+          <div class="bench-sub">
+            <span class="bench-pos">${lbl(p.viTri)}</span>
+            <span class="bench-score">${p.diem}đ</span>
+          </div>
+        </div>`;
+      div.addEventListener('mouseenter', e => showTip(e, p));
+      div.addEventListener('mousemove',  e => moveTip(e));
+      div.addEventListener('mouseleave', hideTip);
+      div.addEventListener('click', () => {
+        hideTip();
+        if (selectedEl) selectedEl.classList.remove('selected');
+        selectedEl = div;
+        div.classList.add('selected');
+        openModal(p, false);
+      });
+      list.appendChild(div);
+    });
+  });
+  document.getElementById('bench-panel').style.display = 'block';
+}
+
+// ── Align bench top with field top ──
+function alignBench() {
+  const field = document.getElementById('field');
+  const bench = document.getElementById('bench-panel');
+  const wrap  = document.querySelector('.page-wrap');
+  if (!field || !bench || !wrap) return;
+  const offset = field.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
+  bench.style.marginTop = Math.max(0, offset) + 'px';
+}
+window.addEventListener('resize', alignBench);
+
+// ── Fetch ──
+fetch(API_URL)
+  .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data => {
+    renderField(data);
+    renderBench(data);
+    document.fonts.ready.then(() => { alignBench(); setTimeout(alignBench, 200); });
+  })
+  .catch(err => {
+    document.getElementById('field').innerHTML = `
+      <div class="state-msg">
+        <span style="font-size:24px">⚠️</span>
+        <span>Không tải được dữ liệu</span>
+        <span style="font-size:10px;opacity:0.5">${err.message}</span>
+      </div>`;
+    document.getElementById('meta').textContent = 'Lỗi kết nối';
+  });
+</script>
+</body>
+</html>

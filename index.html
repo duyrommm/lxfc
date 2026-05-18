@@ -210,7 +210,7 @@ body {
   background: #145214;
   display: flex; align-items: center; justify-content: center;
 }
-.modal-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; display: block; }
+.modal-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; display: block; }
 .modal-avatar .ini { font-size: 18px; font-weight: 700; color: #fff; }
 .modal-avatar img.err { display: none; }
 .modal-avatar img.err ~ .ini { display: flex; }
@@ -220,13 +220,13 @@ body {
 .modal-pos-row {
   display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;
 }
-.modal-pos  { color: rgba(255,255,255,0.6); font-size: 11px; }
 .modal-so-ao {
   display: inline-flex; align-items: center;
   background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
   color: #FFD700; font-size: 11px; font-weight: 700;
   padding: 1px 8px; border-radius: 10px;
 }
+.modal-pos  { color: rgba(255,255,255,0.6); font-size: 11px; }
 
 /* Số áo badge — góc trên phải avatar, không đè header */
 .modal-id-badge {
@@ -281,6 +281,7 @@ body {
 }
 .stat-val { font-family: 'Oswald', sans-serif; font-size: 18px; color: #fff; font-weight: 600; line-height: 1; }
 .stat-val.highlight { color: #FFD700; }
+.stat-val.zero { color: rgba(255,255,255,0.2); }
 .stat-lbl { color: rgba(255,255,255,0.4); font-size: 8.5px; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
 
 /* Bench badge in modal */
@@ -309,6 +310,7 @@ body {
 }
 .adv-label { color: rgba(255,255,255,0.45); font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; }
 .adv-val   { color: #fff; font-size: 14px; font-weight: 700; font-family: 'Oswald', sans-serif; }
+.adv-val.lg { font-size: 20px; }
 .adv-val.good  { color: #4caf50; }
 .adv-val.warn  { color: #ff9800; }
 .adv-val.neutral { color: #90caf9; }
@@ -379,8 +381,8 @@ body {
       <div class="modal-info">
         <div class="modal-name" id="modal-name"></div>
         <div class="modal-pos-row">
-          <span class="modal-pos"  id="modal-pos"></span>
           <span class="modal-so-ao" id="modal-so-ao"></span>
+          <span class="modal-pos"   id="modal-pos"></span>
         </div>
         <div id="modal-role-badge" style="margin-top:6px"></div>
       </div>
@@ -511,54 +513,63 @@ function openModal(p, isStarter) {
     </div>`;
   }).join('');
 
-  // Stat grid — thứ tự: Số Trận, MVP, Bàn Thắng, Kiến Tạo, Penalty, Thẻ Vàng, Thẻ Đỏ, Phản Lưới, Trận Trễ, Bom Hàng, Bàn Thua, Pen Thua
+  // Stat grid
   const stats = [
-    { lbl: 'Số Trận',   val: p.tran,     hi: false },
-    { lbl: 'MVP',       val: p.mvp,      hi: p.mvp > 0 },
-    { lbl: 'Bàn Thắng', val: p.gf,       hi: p.gf > 0 },
-    { lbl: 'Kiến Tạo',  val: p.ast,      hi: p.ast > 0 },
-    { lbl: 'Penalty',   val: p.gp,       hi: false },
-    { lbl: 'Thẻ Vàng',  val: p.yc,       hi: false },
-    { lbl: 'Thẻ Đỏ',    val: p.rc,       hi: p.rc > 0 },
-    { lbl: 'Phản Lưới', val: p.og,       hi: false },
-    { lbl: 'Trận Trễ',  val: p.treTran,  hi: false },
-    { lbl: 'Bom Hàng',  val: p.bm,       hi: false },
-    { lbl: 'Bàn Thua',  val: p.ag,       hi: false },
-    { lbl: 'Pen Thua',  val: p.ap,       hi: false },
+    { lbl: 'Số Trận',   val: p.tran,    hi: false },
+    { lbl: 'MVP',       val: p.mvp,     hi: p.mvp > 0 },
+    { lbl: 'Bàn Thắng', val: p.gf,      hi: p.gf > 0 },
+    { lbl: 'Kiến Tạo',  val: p.ast,     hi: p.ast > 0 },
+    { lbl: 'Penalty',   val: p.gp,      hi: false },
+    { lbl: 'Thẻ Vàng',  val: p.yc,      hi: false },
+    { lbl: 'Thẻ Đỏ',    val: p.rc,      hi: p.rc > 0 },
+    { lbl: 'Phản Lưới', val: p.og,      hi: false },
+    { lbl: 'Trận Trễ',  val: p.treTran, hi: false },
+    { lbl: 'Bom Hàng',  val: p.bm,      hi: false },
+    { lbl: 'Bàn Thua',  val: p.ag,      hi: false },
+    { lbl: 'Pen Thua',  val: p.ap,      hi: false },
   ];
-  document.getElementById('modal-grid').innerHTML = stats.map(s =>
-    `<div class="stat-cell">
-      <div class="stat-val${s.hi?' highlight':''}">${s.val ?? '-'}</div>
+  document.getElementById('modal-grid').innerHTML = stats.map(s => {
+    const v   = s.val ?? 0;
+    const cls = s.hi ? 'highlight' : (v === 0 ? 'zero' : '');
+    return `<div class="stat-cell">
+      <div class="stat-val ${cls}">${v}</div>
       <div class="stat-lbl">${s.lbl}</div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 
-  // Advanced stats section
+  // Advanced stats
   const isAttacker = ['Tiền đạo','Tiền vệ TT','Tiền vệ cánh'].includes(p.viTri);
   const isDefender = ['Thủ môn','Trung vệ','Hậu vệ cánh'].includes(p.viTri);
   const advEl = document.getElementById('modal-advanced');
 
-  const winCls   = p.winRate >= 60 ? 'good' : p.winRate >= 40 ? 'neutral' : 'warn';
+  const winCls    = p.winRate >= 60 ? 'good' : p.winRate >= 40 ? 'neutral' : 'warn';
   const missedCls = p.missedCount === 0 ? 'good' : p.missedCount <= 1 ? 'neutral' : 'warn';
+
+  // Tính số trận thắng từ winRate
+  const winCount = p.winRate != null ? Math.round((p.winRate / 100) * p.tran) : null;
 
   let advCards = `
     <div class="adv-card">
       <div class="adv-label">🎂 Sinh nhật</div>
-      <div class="adv-val neutral">${p.bday || '—'}</div>
+      <div class="adv-val lg neutral">${p.bday || '—'}</div>
     </div>
     <div class="adv-card">
       <div class="adv-label">🏆 Tỉ lệ thắng</div>
       <div class="adv-val ${winCls}">${p.winRate != null ? p.winRate + '%' : '—'}</div>
-      <div class="adv-sub">/${p.tran} trận tham gia</div>
+      <div class="adv-sub">${winCount != null ? winCount + '/' + p.tran : '—'} trận tham gia</div>
     </div>`;
 
   if (isAttacker) {
     const contribCls = p.contribRate >= 40 ? 'good' : p.contribRate >= 20 ? 'neutral' : 'warn';
+    const playerGoals = (p.gf || 0) + (p.ast || 0);
+    const teamGoals   = p.contribRate != null && p.contribRate > 0
+      ? Math.round(playerGoals / (p.contribRate / 100))
+      : '?';
     advCards += `
     <div class="adv-card">
       <div class="adv-label">⚽ Đóng góp bàn thắng</div>
       <div class="adv-val ${contribCls}">${p.contribRate != null ? p.contribRate + '%' : '—'}</div>
-      <div class="adv-sub">(bàn thắng + kiến tạo) / tổng bàn đội</div>
+      <div class="adv-sub">${playerGoals} đóng góp / ${teamGoals} bàn của đội</div>
     </div>`;
   }
   if (isDefender) {

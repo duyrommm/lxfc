@@ -416,20 +416,20 @@ function renderDashboard(d) {
       </div>
     </div>
 
-    <!-- ── Top MVP ── -->
+    <!-- ── Top chuyên cần ── -->
     <div class="card">
-      <div class="card-title">🏆 Top MVP</div>
+      <div class="card-title">💪 Top chuyên cần</div>
       <div class="top-list">
-        ${d.topMVP.filter(p=>p.val>0).map((p,i) => `
+        ${d.topCC.map((p,i) => `
         <div class="top-item">
           <div class="top-rank ${rankCls(i)}">${i+1}</div>
           <div class="top-bar-wrap">
             <div class="top-name">${p.name}</div>
             <div class="top-bar-track">
-              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topMVP[0].val*100)}%;background:#FFD700"></div>
+              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topCC[0].val*100)}%;background:#FFD700"></div>
             </div>
           </div>
-          <div class="top-val" style="color:#FFD700">${p.val}</div>
+          <div class="top-val" style="color:#FFD700">${p.val} trận</div>
         </div>`).join('')}
       </div>
     </div>

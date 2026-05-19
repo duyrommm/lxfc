@@ -71,6 +71,15 @@ body {
 }
 
 /* ── Card ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.grid-2 { grid-column: span 2; }
+.grid-3 { grid-column: span 3; }
 .card {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
@@ -241,6 +250,35 @@ body {
 }
 .disc-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
 
+/* ════════════════════════════════
+   RESPONSIVE MOBILE
+   ════════════════════════════════ */
+@media (max-width: 600px) {
+  body { padding: 10px 8px; }
+
+  .header h1 { font-size: 22px; }
+
+  /* 3 cột → 1 cột */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+  .grid-2, .grid-3 { grid-column: span 1 !important; }
+
+  /* Overview 4 ô → 2x2 */
+  .overview-grid { grid-template-columns: repeat(2, 1fr); }
+  .ov-val { font-size: 28px; }
+
+  /* Bàn thắng/thua nhỏ hơn */
+  .goals-val { font-size: 32px; }
+
+  /* Kỷ luật 2 cột giữ nguyên, font nhỏ hơn */
+  .disc-val { font-size: 18px; }
+
+  /* Top list compact */
+  .top-val { font-size: 14px; }
+}
+
 /* Updated at */
 .updated {
   text-align: center; margin-top: 16px;
@@ -251,7 +289,7 @@ body {
 <body>
 
 <script>
-  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRB8ZSPA2FM3dXryBqUGCt1ttw7UHsijVufeDARdVmn47ymkpbBe7IzpNFBJROTGT3osTDP8_rBYE1pPBPotYFP9buyQ9Qc1yDbNZP9nGtLUDY3coPmbt9f_ogOqfvlg0_qEp4Hk8tL5lMHBDJ_wTM-5s9Lk37Lxtgc6BEa0YaQa6yLS2oV0T1tiH_lKeFkfrq_glxD08--wIvkKbmm8eroO2sBfwrc5izY1JV1gw27rGERzzCHKzMoVqF9i0kEMJdaKBZHVAVFIqOZ4sPUkaQFOtzoKeZHCVY-134N&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRjGPLYpAL7wXkE3dm0zdNw0WrOq--tNIZRLUjyls3-GIZynhjk-Jwo7iNy_trUcSn_0uMbhiT2gnp2J-3GdoJ9WMGljlPGefkzwhGoh0o2kwkaPxor6RRaqXnsRndcarDvfittUGZLm7JvkbLl4gkhSO72UV3ubfA9vp16vx8Sled1c8fjkFE7laaGPt1Bl4sBE-0xO2_7PEz2zAVz6Kc82tTku0q94v8TZOJrsVlHfxniLMvukBCyFqHbUezgIOOzCBzQcjyhLBCD03HTVbcOmW7cqg&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG&page=stats";
 </script>
 
 <nav class="nav">

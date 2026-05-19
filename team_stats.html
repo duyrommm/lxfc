@@ -529,7 +529,12 @@ function renderDashboard(d) {
 // ── Fetch ──
 fetch(API_URL)
   .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(data => renderDashboard(data))
+  .then(data => {
+    if (!data || !data.matches) {
+      throw new Error('Dữ liệu không hợp lệ — kiểm tra lại doGet routing (?page=stats)');
+    }
+    renderDashboard(data);
+  })
   .catch(err => {
     document.getElementById('dashboard').innerHTML = `
       <div class="card" style="grid-column:span 3;text-align:center;padding:40px">

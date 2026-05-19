@@ -204,13 +204,23 @@ body {
   position: relative;
 }
 .modal-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
+  width: 80px; height: 80px; border-radius: 50%;
   overflow: hidden; flex-shrink: 0;
   border: 3px solid #FFD700;
   background: #145214;
   display: flex; align-items: center; justify-content: center;
+  position: relative;
 }
-.modal-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-avatar img {
+  position: absolute;
+  width: 130%;      /* Rộng hơn khung để có room điều chỉnh */
+  height: 130%;
+  object-fit: cover;
+  object-position: center 15%;  /* 15% từ trên — khuôn mặt thường ở đây */
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+}
 .modal-avatar .ini { font-size: 18px; font-weight: 700; color: #fff; }
 .modal-avatar img.err { display: none; }
 .modal-avatar img.err ~ .ini { display: flex; }

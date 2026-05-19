@@ -43,6 +43,33 @@ body {
 .grid-2 { grid-column: span 2; }
 .grid-3 { grid-column: span 3; }
 
+/* ── Nav ── */
+.nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+.nav-btn {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent; color: rgba(255,255,255,0.5);
+  text-decoration: none; transition: all 0.15s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.nav-btn:hover { border-color: rgba(255,215,0,0.5); color: rgba(255,255,255,0.85); }
+.nav-btn.active {
+  background: rgba(255,215,0,0.15);
+  border-color: #FFD700; color: #FFD700;
+}
+
 /* ── Card ── */
 .card {
   background: rgba(255,255,255,0.04);
@@ -224,8 +251,13 @@ body {
 <body>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzYwh_8bcxS-73I12Ou7HZelacLbX-rXBO87BhGQaiWnRY68STcfO1RSB6N7kEJrRfT/exec?page=stats";
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnRB8ZSPA2FM3dXryBqUGCt1ttw7UHsijVufeDARdVmn47ymkpbBe7IzpNFBJROTGT3osTDP8_rBYE1pPBPotYFP9buyQ9Qc1yDbNZP9nGtLUDY3coPmbt9f_ogOqfvlg0_qEp4Hk8tL5lMHBDJ_wTM-5s9Lk37Lxtgc6BEa0YaQa6yLS2oV0T1tiH_lKeFkfrq_glxD08--wIvkKbmm8eroO2sBfwrc5izY1JV1gw27rGERzzCHKzMoVqF9i0kEMJdaKBZHVAVFIqOZ4sPUkaQFOtzoKeZHCVY-134N&lib=Mbf4awmFVdZhjC63qXjqcH3bIP5hoCzyG";
 </script>
+
+<nav class="nav">
+  <a class="nav-btn" href="https://duyrommm.github.io/lxfc/dynamic.html">⚽ Đội Hình</a>
+  <a class="nav-btn active" href="#">📊 Thống Kê Đội</a>
+</nav>
 
 <div class="header">
   <h1>⚽ LXFC STATS 2026</h1>
@@ -397,27 +429,6 @@ function renderDashboard(d) {
           </div>
           <div class="h2h-stat">${o.gf}:${o.ga}</div>
         </div>`).join('')}
-      </div>
-    </div>
-
-    <!-- ── Tài chính ── -->
-    <div class="card">
-      <div class="card-title">💰 Tài chính</div>
-      <div class="finance-big">
-        <div class="val">${fmt(d.finance.quy)}đ</div>
-        <div class="label">Quỹ hiện tại</div>
-      </div>
-      <div class="finance-row">
-        <span class="flabel">Tổng thu</span>
-        <span class="fval thu">+${fmt(d.finance.thu)}đ</span>
-      </div>
-      <div class="finance-row">
-        <span class="flabel">Tổng chi</span>
-        <span class="fval chi">-${fmt(d.finance.chi)}đ</span>
-      </div>
-      <div class="finance-row">
-        <span class="flabel">TB chi / trận</span>
-        <span class="fval" style="color:rgba(255,255,255,0.7)">${fmt(Math.round(d.finance.chi/total))}đ</span>
       </div>
     </div>
 

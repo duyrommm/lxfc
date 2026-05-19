@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LXFC Stats 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a2a0a;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #fff;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.header h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px; font-weight: 700;
+  color: #FFD700; letter-spacing: 3px;
+}
+.header .season {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 4px;
+}
+
+/* ── Grid layout ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.grid-2 { grid-column: span 2; }
+.grid-3 { grid-column: span 3; }
+
+/* ── Card ── */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* ── Loading ── */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 100px; color: rgba(255,255,255,0.3); font-size: 13px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #FFD700; border-radius: 50%;
+  animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Overview stats ── */
+.overview-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 10px;
+}
+.ov-block { text-align: center; }
+.ov-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 36px; font-weight: 700; line-height: 1;
+}
+.ov-label {
+  color: rgba(255,255,255,0.4);
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-top: 4px;
+}
+
+/* ── WDL bar ── */
+.wdl-wrap { margin-top: 14px; }
+.wdl-bar {
+  display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px;
+}
+.wdl-w { background: #4caf50; border-radius: 5px 0 0 5px; }
+.wdl-d { background: #ff9800; }
+.wdl-l { background: #f44336; border-radius: 0 5px 5px 0; }
+.wdl-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 6px; font-size: 10px;
+}
+.wdl-labels span { display: flex; align-items: center; gap: 4px; color: rgba(255,255,255,0.6); }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── Goals stats ── */
+.goals-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 24px; padding: 8px 0;
+}
+.goals-block { text-align: center; }
+.goals-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 42px; font-weight: 700; line-height: 1;
+}
+.goals-val.green { color: #4caf50; }
+.goals-val.red   { color: #f44336; }
+.goals-label { color: rgba(255,255,255,0.4); font-size: 10px; text-transform: uppercase; margin-top: 3px; }
+.goals-sep {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px; color: rgba(255,255,255,0.2);
+}
+.goals-avg { text-align: center; margin-top: 10px; color: rgba(255,255,255,0.4); font-size: 11px; }
+
+/* ── Top list ── */
+.top-list { display: flex; flex-direction: column; gap: 8px; }
+.top-item {
+  display: flex; align-items: center; gap: 10px;
+}
+.top-rank {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px; color: rgba(255,255,255,0.25);
+  width: 18px; text-align: center; flex-shrink: 0;
+}
+.top-rank.gold   { color: #FFD700; }
+.top-rank.silver { color: #bdbdbd; }
+.top-rank.bronze { color: #cd7f32; }
+.top-bar-wrap { flex: 1; }
+.top-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-bar-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.top-bar-fill  { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.top-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px; font-weight: 700;
+  min-width: 28px; text-align: right;
+}
+
+/* ── Form strip ── */
+.form-wrap { display: flex; flex-direction: column; gap: 10px; }
+.form-row  { display: flex; align-items: center; gap: 8px; }
+.form-opponent { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.form-score { font-size: 11px; color: rgba(255,255,255,0.5); width: 44px; text-align: center; flex-shrink: 0; }
+.form-date  { font-size: 10px; color: rgba(255,255,255,0.3); width: 50px; text-align: right; flex-shrink: 0; }
+.result-badge {
+  width: 22px; height: 22px; border-radius: 4px;
+  font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.result-badge.W { background: #4caf50; }
+.result-badge.D { background: #ff9800; }
+.result-badge.L { background: #f44336; }
+
+/* ── Head to head ── */
+.h2h-list { display: flex; flex-direction: column; gap: 8px; }
+.h2h-item { display: flex; align-items: center; gap: 8px; }
+.h2h-name { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h2h-badges { display: flex; gap: 3px; }
+.h2h-badge {
+  font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 4px;
+  font-family: 'Oswald', sans-serif;
+}
+.h2h-badge.w { background: rgba(76,175,80,0.2); color: #4caf50; }
+.h2h-badge.d { background: rgba(255,152,0,0.2); color: #ff9800; }
+.h2h-badge.l { background: rgba(244,67,54,0.2); color: #f44336; }
+.h2h-stat { font-size: 10px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
+
+/* ── Finance ── */
+.finance-big {
+  text-align: center; padding: 4px 0 12px;
+}
+.finance-big .val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 32px; font-weight: 700; color: #4caf50;
+}
+.finance-big .label {
+  color: rgba(255,255,255,0.4); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
+}
+.finance-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+}
+.finance-row .flabel { color: rgba(255,255,255,0.5); }
+.finance-row .fval   { font-weight: 700; }
+.finance-row .fval.thu { color: #4caf50; }
+.finance-row .fval.chi { color: #f44336; }
+
+/* ── Discipline ── */
+.disc-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.disc-item {
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px; padding: 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.disc-icon { font-size: 20px; flex-shrink: 0; }
+.disc-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px; font-weight: 700;
+}
+.disc-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+
+/* Updated at */
+.updated {
+  text-align: center; margin-top: 16px;
+  color: rgba(255,255,255,0.2); font-size: 10px;
+}
+</style>
+</head>
+<body>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzYwh_8bcxS-73I12Ou7HZelacLbX-rXBO87BhGQaiWnRY68STcfO1RSB6N7kEJrRfT/exec?page=stats";
+</script>
+
+<div class="header">
+  <h1>⚽ LXFC STATS 2026</h1>
+  <div class="season" id="updated">Đang tải...</div>
+</div>
+
+<div class="grid" id="dashboard">
+  <div class="card" style="grid-column:span 3">
+    <div class="loading"><div class="spinner"></div> Đang tải dữ liệu...</div>
+  </div>
+</div>
+
+<script>
+function fmt(n) {
+  return Number(n).toLocaleString('vi-VN');
+}
+function rankCls(i) {
+  return i===0?'gold':i===1?'silver':i===2?'bronze':'';
+}
+
+function renderDashboard(d) {
+  const m = d.matches;
+  const total = m.w + m.d + m.l;
+  const winPct = total > 0 ? Math.round(m.w/total*100) : 0;
+  const wPct = total > 0 ? (m.w/total*100).toFixed(1) : 0;
+  const dPct = total > 0 ? (m.d/total*100).toFixed(1) : 0;
+  const lPct = total > 0 ? (m.l/total*100).toFixed(1) : 0;
+
+  document.getElementById('dashboard').innerHTML = `
+
+    <!-- ── Tổng quan ── -->
+    <div class="card grid-2">
+      <div class="card-title">📊 Tổng quan mùa giải</div>
+      <div class="overview-grid">
+        <div class="ov-block">
+          <div class="ov-val" style="color:#FFD700">${total}</div>
+          <div class="ov-label">Số trận</div>
+        </div>
+        <div class="ov-block">
+          <div class="ov-val" style="color:#4caf50">${m.w}</div>
+          <div class="ov-label">Thắng</div>
+        </div>
+        <div class="ov-block">
+          <div class="ov-val" style="color:#ff9800">${m.d}</div>
+          <div class="ov-label">Hòa</div>
+        </div>
+        <div class="ov-block">
+          <div class="ov-val" style="color:#f44336">${m.l}</div>
+          <div class="ov-label">Thua</div>
+        </div>
+      </div>
+      <div class="wdl-wrap">
+        <div class="wdl-bar">
+          <div class="wdl-w" style="flex:${m.w}"></div>
+          <div class="wdl-d" style="flex:${m.d}"></div>
+          <div class="wdl-l" style="flex:${m.l}"></div>
+        </div>
+        <div class="wdl-labels">
+          <span><span class="dot" style="background:#4caf50"></span>Thắng ${wPct}%</span>
+          <span><span class="dot" style="background:#ff9800"></span>Hòa ${dPct}%</span>
+          <span><span class="dot" style="background:#f44336"></span>Thua ${lPct}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Bàn thắng/thua ── -->
+    <div class="card">
+      <div class="card-title">⚽ Bàn thắng / Thua</div>
+      <div class="goals-row">
+        <div class="goals-block">
+          <div class="goals-val green">${m.gf}</div>
+          <div class="goals-label">Bàn thắng</div>
+        </div>
+        <div class="goals-sep">:</div>
+        <div class="goals-block">
+          <div class="goals-val red">${m.ga}</div>
+          <div class="goals-label">Bàn thua</div>
+        </div>
+      </div>
+      <div class="goals-avg">
+        TB ${(m.gf/total).toFixed(1)} bàn thắng · ${(m.ga/total).toFixed(1)} bàn thua / trận
+      </div>
+    </div>
+
+    <!-- ── Top ghi bàn ── -->
+    <div class="card">
+      <div class="card-title">🥅 Top ghi bàn</div>
+      <div class="top-list">
+        ${d.topGF.map((p,i) => `
+        <div class="top-item">
+          <div class="top-rank ${rankCls(i)}">${i+1}</div>
+          <div class="top-bar-wrap">
+            <div class="top-name">${p.name}</div>
+            <div class="top-bar-track">
+              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topGF[0].val*100)}%;background:#4caf50"></div>
+            </div>
+          </div>
+          <div class="top-val" style="color:#4caf50">${p.val}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Top kiến tạo ── -->
+    <div class="card">
+      <div class="card-title">🎯 Top kiến tạo</div>
+      <div class="top-list">
+        ${d.topAST.map((p,i) => `
+        <div class="top-item">
+          <div class="top-rank ${rankCls(i)}">${i+1}</div>
+          <div class="top-bar-wrap">
+            <div class="top-name">${p.name}</div>
+            <div class="top-bar-track">
+              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topAST[0].val*100)}%;background:#2196f3"></div>
+            </div>
+          </div>
+          <div class="top-val" style="color:#2196f3">${p.val}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Top MVP ── -->
+    <div class="card">
+      <div class="card-title">🏆 Top MVP</div>
+      <div class="top-list">
+        ${d.topMVP.filter(p=>p.val>0).map((p,i) => `
+        <div class="top-item">
+          <div class="top-rank ${rankCls(i)}">${i+1}</div>
+          <div class="top-bar-wrap">
+            <div class="top-name">${p.name}</div>
+            <div class="top-bar-track">
+              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topMVP[0].val*100)}%;background:#FFD700"></div>
+            </div>
+          </div>
+          <div class="top-val" style="color:#FFD700">${p.val}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Form gần đây ── -->
+    <div class="card">
+      <div class="card-title">📈 Form gần đây</div>
+      <div style="display:flex;gap:5px;margin-bottom:12px">
+        ${d.recentForm.map(r=>`<div class="result-badge ${r}">${r}</div>`).join('')}
+      </div>
+      <div class="form-wrap">
+        ${d.recentMatches.map(m=>{
+          const res = m.our>m.their?'W':m.our===m.their?'D':'L';
+          return `<div class="form-row">
+            <div class="result-badge ${res}">${res}</div>
+            <div class="form-opponent">${m.opponent}</div>
+            <div class="form-score">${m.our} - ${m.their}</div>
+            <div class="form-date">${m.date}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- ── Lịch sử đối đầu ── -->
+    <div class="card">
+      <div class="card-title">🆚 Lịch sử đối đầu</div>
+      <div class="h2h-list">
+        ${d.h2h.map(o=>`
+        <div class="h2h-item">
+          <div class="h2h-name">${o.name}</div>
+          <div class="h2h-badges">
+            ${o.w>0?`<span class="h2h-badge w">${o.w}W</span>`:''}
+            ${o.d>0?`<span class="h2h-badge d">${o.d}D</span>`:''}
+            ${o.l>0?`<span class="h2h-badge l">${o.l}L</span>`:''}
+          </div>
+          <div class="h2h-stat">${o.gf}:${o.ga}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Tài chính ── -->
+    <div class="card">
+      <div class="card-title">💰 Tài chính</div>
+      <div class="finance-big">
+        <div class="val">${fmt(d.finance.quy)}đ</div>
+        <div class="label">Quỹ hiện tại</div>
+      </div>
+      <div class="finance-row">
+        <span class="flabel">Tổng thu</span>
+        <span class="fval thu">+${fmt(d.finance.thu)}đ</span>
+      </div>
+      <div class="finance-row">
+        <span class="flabel">Tổng chi</span>
+        <span class="fval chi">-${fmt(d.finance.chi)}đ</span>
+      </div>
+      <div class="finance-row">
+        <span class="flabel">TB chi / trận</span>
+        <span class="fval" style="color:rgba(255,255,255,0.7)">${fmt(Math.round(d.finance.chi/total))}đ</span>
+      </div>
+    </div>
+
+    <!-- ── Kỷ luật ── -->
+    <div class="card">
+      <div class="card-title">🚨 Kỷ luật</div>
+      <div class="disc-grid">
+        <div class="disc-item">
+          <div class="disc-icon">🟨</div>
+          <div>
+            <div class="disc-val" style="color:#FFD700">${d.discipline.yc}</div>
+            <div class="disc-label">Thẻ vàng</div>
+          </div>
+        </div>
+        <div class="disc-item">
+          <div class="disc-icon">🟥</div>
+          <div>
+            <div class="disc-val" style="color:#f44336">${d.discipline.rc}</div>
+            <div class="disc-label">Thẻ đỏ</div>
+          </div>
+        </div>
+        <div class="disc-item">
+          <div class="disc-icon">💣</div>
+          <div>
+            <div class="disc-val" style="color:#ff9800">${d.discipline.bm}</div>
+            <div class="disc-label">Bom hàng</div>
+          </div>
+        </div>
+        <div class="disc-item">
+          <div class="disc-icon">⏰</div>
+          <div>
+            <div class="disc-val" style="color:#90caf9">${d.discipline.tr}</div>
+            <div class="disc-label">Trận trễ</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="card-title" style="margin-bottom:8px">Top bom hàng</div>
+        <div class="top-list">
+          ${d.topBM.filter(p=>p.val>0).map((p,i)=>`
+          <div class="top-item">
+            <div class="top-rank ${rankCls(i)}">${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">${p.name}</div>
+              <div class="top-bar-track">
+                <div class="top-bar-fill" style="width:${Math.round(p.val/d.topBM[0].val*100)}%;background:#ff9800"></div>
+              </div>
+            </div>
+            <div class="top-val" style="color:#ff9800">${p.val}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+  `;
+
+  document.getElementById('updated').textContent = `Mùa giải 2026 · Cập nhật: ${d.updatedAt}`;
+}
+
+// ── Fetch ──
+fetch(API_URL)
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data => renderDashboard(data))
+  .catch(err => {
+    document.getElementById('dashboard').innerHTML = `
+      <div class="card" style="grid-column:span 3;text-align:center;padding:40px">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div>Không tải được dữ liệu</div>
+        <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px">${err.message}</div>
+      </div>`;
+  });
+</script>
+</body>
+</html>

@@ -388,7 +388,7 @@ function renderDashboard(d) {
         <div class="top-item">
           <div class="top-rank ${rankCls(i)}">${i+1}</div>
           <div class="top-bar-wrap">
-            <div class="top-name">${p.name}</div>
+            <div class="top-name">${p.name}${p.gp>0?` <span style="color:#ff9800;font-size:9px;font-weight:400">(${p.gp} pen)</span>`:''}</div>
             <div class="top-bar-track">
               <div class="top-bar-fill" style="width:${Math.round(p.val/d.topGF[0].val*100)}%;background:#4caf50"></div>
             </div>
@@ -440,15 +440,15 @@ function renderDashboard(d) {
       <div style="display:flex;gap:5px;margin-bottom:12px">
         ${d.recentForm.map(r=>`<div class="result-badge ${r}">${r}</div>`).join('')}
       </div>
-      <div></div>
       <div class="form-wrap">
         ${d.recentMatches.map(m=>{
           const res = m.our>m.their?'W':m.our===m.their?'D':'L';
-          return `<div class="form-row">
+          return `<div class="form-row" style="flex-wrap:wrap;gap:4px">
             <div class="result-badge ${res}">${res}</div>
             <div class="form-opponent">${m.opponent}</div>
             <div class="form-score">${m.our} - ${m.their}</div>
             <div class="form-date">${m.date}</div>
+            ${m.stadium?`<div style="width:100%;padding-left:30px;font-size:9px;color:rgba(255,255,255,0.3)">📍 ${m.stadium}</div>`:''}
           </div>`;
         }).join('')}
       </div>
@@ -471,25 +471,7 @@ function renderDashboard(d) {
       </div>
     </div>
 
-    <!-- ── Top bom hàng ── -->
-    <div class="card">
-      <div class="card-title">💣 Top bom hàng</div>
-      <div class="top-list">
-        ${d.topBM.filter(p=>p.val>0).map((p,i)=>`
-        <div class="top-item">
-          <div class="top-rank ${rankCls(i)}">${i+1}</div>
-          <div class="top-bar-wrap">
-            <div class="top-name">${p.name}</div>
-            <div class="top-bar-track">
-              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topBM[0].val*100)}%;background:#ff9800"></div>
-            </div>
-          </div>
-          <div class="top-val" style="color:#ff9800">${p.val}</div>
-        </div>`).join('')}
-      </div>
-    </div>
-
-    <!-- ── Kỷ luật ── -->
+    <!-- ── Kỷ luật + Top bom hàng ── -->
     <div class="card">
       <div class="card-title">🚨 Kỷ luật</div>
       <div class="disc-grid">
@@ -520,6 +502,22 @@ function renderDashboard(d) {
             <div class="disc-val" style="color:#90caf9">${d.discipline.tr}</div>
             <div class="disc-label">Trận trễ</div>
           </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
+        <div class="card-title" style="margin-bottom:10px">💣 Top bom hàng</div>
+        <div class="top-list">
+          ${d.topBM.filter(p=>p.val>0).map((p,i)=>`
+          <div class="top-item">
+            <div class="top-rank ${rankCls(i)}">${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">${p.name}</div>
+              <div class="top-bar-track">
+                <div class="top-bar-fill" style="width:${Math.round(p.val/d.topBM[0].val*100)}%;background:#ff9800"></div>
+              </div>
+            </div>
+            <div class="top-val" style="color:#ff9800">${p.val}</div>
+          </div>`).join('')}
         </div>
       </div>
     </div>

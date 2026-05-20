@@ -436,10 +436,11 @@ function renderDashboard(d) {
 
     <!-- ── Form gần đây ── -->
     <div class="card">
-      <div class="card-title">📈 Form gần đây</div>
+      <div class="card-title">📅 Các trận gần nhất</div>
       <div style="display:flex;gap:5px;margin-bottom:12px">
         ${d.recentForm.map(r=>`<div class="result-badge ${r}">${r}</div>`).join('')}
       </div>
+      <div></div>
       <div class="form-wrap">
         ${d.recentMatches.map(m=>{
           const res = m.our>m.their?'W':m.our===m.their?'D':'L';
@@ -466,6 +467,24 @@ function renderDashboard(d) {
             ${o.l>0?`<span class="h2h-badge l">${o.l}L</span>`:''}
           </div>
           <div class="h2h-stat">${o.gf}:${o.ga}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Top bom hàng ── -->
+    <div class="card">
+      <div class="card-title">💣 Top bom hàng</div>
+      <div class="top-list">
+        ${d.topBM.filter(p=>p.val>0).map((p,i)=>`
+        <div class="top-item">
+          <div class="top-rank ${rankCls(i)}">${i+1}</div>
+          <div class="top-bar-wrap">
+            <div class="top-name">${p.name}</div>
+            <div class="top-bar-track">
+              <div class="top-bar-fill" style="width:${Math.round(p.val/d.topBM[0].val*100)}%;background:#ff9800"></div>
+            </div>
+          </div>
+          <div class="top-val" style="color:#ff9800">${p.val}</div>
         </div>`).join('')}
       </div>
     </div>
@@ -501,22 +520,6 @@ function renderDashboard(d) {
             <div class="disc-val" style="color:#90caf9">${d.discipline.tr}</div>
             <div class="disc-label">Trận trễ</div>
           </div>
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <div class="card-title" style="margin-bottom:8px">Top bom hàng</div>
-        <div class="top-list">
-          ${d.topBM.filter(p=>p.val>0).map((p,i)=>`
-          <div class="top-item">
-            <div class="top-rank ${rankCls(i)}">${i+1}</div>
-            <div class="top-bar-wrap">
-              <div class="top-name">${p.name}</div>
-              <div class="top-bar-track">
-                <div class="top-bar-fill" style="width:${Math.round(p.val/d.topBM[0].val*100)}%;background:#ff9800"></div>
-              </div>
-            </div>
-            <div class="top-val" style="color:#ff9800">${p.val}</div>
-          </div>`).join('')}
         </div>
       </div>
     </div>

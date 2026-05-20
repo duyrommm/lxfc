@@ -451,7 +451,9 @@ body {
       <div class="legend-item"><span class="legend-dot" style="background:#c97de8"></span>Tiền vệ</div>
       <div class="legend-item"><span class="legend-dot" style="background:#e87070"></span>Tiền đạo</div>
     </div>
-    <div class="legend">*Click vào ảnh cầu thủ để xem thông số chi tiết</div>
+    <div style="text-align:center;margin-top:8px;color:rgba(255,255,255,0.3);font-size:10px;font-style:italic">
+      * Click vào ảnh cầu thủ để xem thông số chi tiết
+    </div>
   </div>
 
   <!-- ── Dự bị ── -->
@@ -754,19 +756,22 @@ function renderField(data) {
 
   field.appendChild(Object.assign(document.createElement('div'), {className:'goal-top'}));
 
+  // 4-2-3-1:
   // Tiền đạo (1)
-  if (s["Tiền đạo"]?.length)         field.appendChild(makeRow(s["Tiền đạo"], true));
+  if (s["Tiền đạo"]?.length)
+    field.appendChild(makeRow(s["Tiền đạo"], true));
 
-  // Hàng tiền vệ: cánh T | TT x2 | cánh P
-  const midRow = [
+  // TV cánh (2) + TV TT số 3 ở giữa (attacking mid)
+  const amRow = [
     s["Tiền vệ cánh"]?.[0],
-    ...(s["Tiền vệ TT"]?.slice(0,2) || []),
+    s["Tiền vệ TT"]?.[2],
     s["Tiền vệ cánh"]?.[1]
   ].filter(Boolean);
-  if (midRow.length)                  field.appendChild(makeRow(midRow, true));
+  if (amRow.length) field.appendChild(makeRow(amRow, true));
 
-  // TV TT thứ 3 (hàng giữa riêng — tạo hình 4-1-4-1)
-  if (s["Tiền vệ TT"]?.length >= 3)  field.appendChild(makeRow([s["Tiền vệ TT"][2]], true));
+  // 2 TV TT (defensive/central mids)
+  const cmRow = s["Tiền vệ TT"]?.slice(0,2) || [];
+  if (cmRow.length) field.appendChild(makeRow(cmRow, true));
 
   // Hậu vệ: HV cánh T | Trung vệ x2 | HV cánh P
   const defRow = [
@@ -774,10 +779,11 @@ function renderField(data) {
     ...(s["Trung vệ"] || []),
     s["Hậu vệ cánh"]?.[1]
   ].filter(Boolean);
-  if (defRow.length)                  field.appendChild(makeRow(defRow, true));
+  if (defRow.length) field.appendChild(makeRow(defRow, true));
 
   // Thủ môn
-  if (s["Thủ môn"]?.length)          field.appendChild(makeRow(s["Thủ môn"], true));
+  if (s["Thủ môn"]?.length)
+    field.appendChild(makeRow(s["Thủ môn"], true));
 
   field.appendChild(Object.assign(document.createElement('div'), {className:'goal-bot'}));
 

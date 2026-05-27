@@ -374,11 +374,16 @@ body {
   .score-badge { font-size: 8px; padding: 1px 4px; }
   .row { gap: 4px; padding: 5px 0; }
 
-  /* Bench: chuyển sang ngang bên dưới sân */
+  /* Bench & Roster: chuyển sang ngang bên dưới sân */
   .bench-panel {
     width: 100% !important;
     margin-top: 0 !important;
     padding: 10px 10px;
+  }
+  .roster-panel {
+    width: 100% !important;
+    max-height: 260px;
+    margin-top: 0 !important;
   }
   .bench-list {
     display: grid;
@@ -405,6 +410,67 @@ body {
   /* Title nhỏ hơn */
   .title-bar h1 { font-size: 22px; }
 }
+
+/* ── Roster panel (danh sách đầy đủ) ── */
+.roster-panel {
+  width: 150px; flex-shrink: 0;
+  background: rgba(0,0,0,0.28);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 10px 8px;
+  display: flex; flex-direction: column;
+  max-height: 640px;
+}
+.roster-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 700; color: #FFD700;
+  letter-spacing: 1px; text-align: center;
+  margin-bottom: 8px; text-transform: uppercase; flex-shrink: 0;
+}
+.roster-filter {
+  display: flex; gap: 3px; margin-bottom: 8px;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.roster-filter-btn {
+  font-size: 8px; font-weight: 700; padding: 2px 5px;
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+  background: transparent; color: rgba(255,255,255,0.4);
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+.roster-filter-btn.active { background: rgba(255,215,0,0.15); border-color: #FFD700; color: #FFD700; }
+.roster-list {
+  overflow-y: auto; flex: 1;
+  display: flex; flex-direction: column; gap: 2px;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.roster-list::-webkit-scrollbar { width: 3px; }
+.roster-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.roster-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 5px; border-radius: 6px; cursor: pointer;
+  transition: background 0.15s; flex-shrink: 0;
+}
+.roster-item:hover    { background: rgba(255,255,255,0.08); }
+.roster-item.selected { background: rgba(255,215,0,0.12); }
+.roster-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: #145214;
+  display: flex; align-items: center; justify-content: center;
+}
+.roster-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; }
+.roster-avatar .ini { font-size: 8px; font-weight: 700; color: #fff; display: none; }
+.roster-avatar img.err { display: none; }
+.roster-avatar img.err ~ .ini { display: flex; }
+.roster-gk  .roster-avatar { border-color: rgba(255,215,0,0.6); }
+.roster-def .roster-avatar { border-color: rgba(91,159,232,0.6); }
+.roster-mid .roster-avatar { border-color: rgba(201,125,232,0.6); }
+.roster-fwd .roster-avatar { border-color: rgba(232,112,112,0.6); }
+.roster-info { min-width: 0; flex: 1; }
+.roster-name  { color: #fff; font-size: 9.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.roster-pos   { color: rgba(255,255,255,0.4); font-size: 8px; }
+.roster-score { color: #FFD700; font-size: 9px; font-weight: 700; flex-shrink: 0; }
 
 #tooltip {
   position: fixed;
@@ -460,6 +526,19 @@ body {
   <div class="bench-panel" id="bench-panel" style="display:none">
     <div class="bench-title">🔄 Dự Bị</div>
     <div class="bench-list" id="bench-list"></div>
+  </div>
+
+  <!-- ── Danh sách cầu thủ ── -->
+  <div class="roster-panel" id="roster-panel" style="display:none">
+    <div class="roster-title">👥 Đội Hình</div>
+    <div class="roster-filter" id="roster-filter">
+      <button class="roster-filter-btn active" data-pos="all">Tất cả</button>
+      <button class="roster-filter-btn" data-pos="Thủ môn">TM</button>
+      <button class="roster-filter-btn" data-pos="def">HV</button>
+      <button class="roster-filter-btn" data-pos="mid">TV</button>
+      <button class="roster-filter-btn" data-pos="Tiền đạo">TĐ</button>
+    </div>
+    <div class="roster-list" id="roster-list"></div>
   </div>
 
 </div>
@@ -833,14 +912,79 @@ function renderBench(data) {
   document.getElementById('bench-panel').style.display = 'block';
 }
 
-// ── Align bench top with field top ──
+// ── Render roster (danh sách đầy đủ) ──
+let allRosterPlayers = [];
+
+function renderRoster(data) {
+  // Gộp tất cả từ squad + bench
+  const ORDER = ["Thủ môn","Hậu vệ cánh","Trung vệ","Tiền vệ TT","Tiền vệ cánh","Tiền đạo"];
+  allRosterPlayers = [];
+  ORDER.forEach(pos => {
+    (data.squad[pos] || []).forEach(p => allRosterPlayers.push({ ...p, isStarter: true }));
+    (data.bench[pos] || []).forEach(p => allRosterPlayers.push({ ...p, isStarter: false }));
+  });
+  // Sắp xếp theo điểm giảm dần
+  allRosterPlayers.sort((a, b) => b.diem - a.diem);
+
+  renderRosterList('all');
+  document.getElementById('roster-panel').style.display = 'flex';
+
+  // Filter buttons
+  document.querySelectorAll('.roster-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.roster-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRosterList(btn.dataset.pos);
+    });
+  });
+}
+
+function renderRosterList(posFilter) {
+  const list = document.getElementById('roster-list');
+  list.innerHTML = '';
+  const filtered = allRosterPlayers.filter(p => {
+    if (posFilter === 'all') return true;
+    if (posFilter === 'def') return p.viTri.includes('Hậu') || p.viTri.includes('Trung');
+    if (posFilter === 'mid') return p.viTri.includes('Tiền vệ');
+    return p.viTri === posFilter;
+  });
+
+  filtered.forEach(p => {
+    const pc  = cls(p.viTri);
+    const div = document.createElement('div');
+    div.className = `roster-item roster-${pc}`;
+    const avatarHTML = p.avatar
+      ? `<img src="${faceUrl(p.avatar, 60)}" alt="${p.ten}" onerror="if(this.src.includes('upload/c_')){this.src='${p.avatar}'}else{this.classList.add('err')}">`
+      : '';
+    div.innerHTML = `
+      <div class="roster-avatar">${avatarHTML}<span class="ini">${ini(p.ten)}</span></div>
+      <div class="roster-info">
+        <div class="roster-name">${p.ten}</div>
+        <div class="roster-pos">${lbl(p.viTri)}</div>
+      </div>
+      <div class="roster-score">${p.diem}đ</div>`;
+    div.addEventListener('mouseenter', e => showTip(e, p));
+    div.addEventListener('mousemove',  e => moveTip(e));
+    div.addEventListener('mouseleave', hideTip);
+    div.addEventListener('click', () => {
+      hideTip();
+      if (selectedEl) selectedEl.classList.remove('selected');
+      selectedEl = div;
+      div.classList.add('selected');
+      openModal(p, p.isStarter);
+    });
+    list.appendChild(div);
+  });
+}
 function alignBench() {
-  const field = document.getElementById('field');
-  const bench = document.getElementById('bench-panel');
-  const wrap  = document.querySelector('.page-wrap');
-  if (!field || !bench || !wrap) return;
+  const field  = document.getElementById('field');
+  const bench  = document.getElementById('bench-panel');
+  const roster = document.getElementById('roster-panel');
+  const wrap   = document.querySelector('.page-wrap');
+  if (!field || !wrap) return;
   const offset = field.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
-  bench.style.marginTop = Math.max(0, offset) + 'px';
+  if (bench)  bench.style.marginTop  = Math.max(0, offset) + 'px';
+  if (roster) roster.style.marginTop = Math.max(0, offset) + 'px';
 }
 window.addEventListener('resize', alignBench);
 
@@ -850,6 +994,7 @@ fetch(API_URL)
   .then(data => {
     renderField(data);
     renderBench(data);
+    renderRoster(data);
     document.fonts.ready.then(() => { alignBench(); setTimeout(alignBench, 200); });
   })
   .catch(err => {

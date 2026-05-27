@@ -750,11 +750,10 @@ function openModal(p, isStarter) {
     </div>`;
 
   if (isAttacker) {
-    const contribCls = p.contribRate >= 40 ? 'good' : p.contribRate >= 20 ? 'neutral' : 'warn';
+    const contribCls  = p.contribRate >= 40 ? 'good' : p.contribRate >= 20 ? 'neutral' : 'warn';
     const playerGoals = (p.gf || 0) + (p.ast || 0);
-    const teamGoals   = p.contribRate != null && p.contribRate > 0
-      ? Math.round(playerGoals / (p.contribRate / 100))
-      : '?';
+    // teamGoals được trả về trực tiếp từ API, không tính ngược
+    const teamGoals   = p.teamGoals != null ? p.teamGoals : '—';
     advCards += `
     <div class="adv-card">
       <div class="adv-label">⚽ Đóng góp bàn thắng</div>
@@ -916,15 +915,8 @@ function renderBench(data) {
 let allRosterPlayers = [];
 
 function renderRoster(data) {
-  // Gộp tất cả từ squad + bench
-  const ORDER = ["Thủ môn","Hậu vệ cánh","Trung vệ","Tiền vệ TT","Tiền vệ cánh","Tiền đạo"];
-  allRosterPlayers = [];
-  ORDER.forEach(pos => {
-    (data.squad[pos] || []).forEach(p => allRosterPlayers.push({ ...p, isStarter: true }));
-    (data.bench[pos] || []).forEach(p => allRosterPlayers.push({ ...p, isStarter: false }));
-  });
-  // Sắp xếp theo điểm giảm dần
-  allRosterPlayers.sort((a, b) => b.diem - a.diem);
+  // Dùng allPlayers từ API (tất cả cầu thủ Chính thức trong CAU_THU)
+  allRosterPlayers = data.allPlayers || [];
 
   renderRosterList('all');
   document.getElementById('roster-panel').style.display = 'flex';

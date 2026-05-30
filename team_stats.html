@@ -181,12 +181,7 @@ body {
   min-width: 28px; text-align: right;
 }
 
-/* ── Form strip ── */
-.form-wrap { display: flex; flex-direction: column; gap: 10px; }
-.form-row  { display: flex; align-items: center; gap: 8px; }
-.form-opponent { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.form-score { font-size: 11px; color: rgba(255,255,255,0.5); width: 44px; text-align: center; flex-shrink: 0; }
-.form-date  { font-size: 10px; color: rgba(255,255,255,0.3); width: 50px; text-align: right; flex-shrink: 0; }
+/* ── Result badge (dùng trong lịch sử đối đầu) ── */
 .result-badge {
   width: 22px; height: 22px; border-radius: 4px;
   font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 700;
@@ -434,25 +429,34 @@ function renderDashboard(d) {
       </div>
     </div>
 
-    <!-- ── Form gần đây ── -->
+    <!-- ── Lucky Charm ── -->
     <div class="card">
-      <div class="card-title">📅 Các trận gần nhất</div>
-      <div style="display:flex;gap:5px;margin-bottom:12px">
-        ${d.recentForm.map(r=>`<div class="result-badge ${r}">${r}</div>`).join('')}
-      </div>
-      <div class="form-wrap">
-        ${d.recentMatches.map(m=>{
-          const res = m.our>m.their?'W':m.our===m.their?'D':'L';
-          return `<div class="form-row" style="flex-wrap:wrap;gap:4px">
-            <div class="result-badge ${res}">${res}</div>
-            <div class="form-opponent">${m.opponent}</div>
-            <div class="form-score">${m.our} - ${m.their}</div>
-            <div class="form-date">${m.date}</div>
-            ${m.stadium?`<div style="width:100%;padding-left:30px;font-size:9px;color:rgba(255,255,255,0.3)">📍 ${m.stadium}</div>`:''}
+      <div class="card-title">🍀 Linh vật của đội — tỉ lệ thắng</div>
+      ${!d.topWinRate || d.topWinRate.length === 0
+        ? `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:12px">Chưa đủ dữ liệu (cần ≥5 trận)</div>`
+        : `<div class="top-list">
+        ${d.topWinRate.map((p,i) => {
+          const maxRate = d.topWinRate[0].winRate || 1;
+          const colors  = ['#FFD700','#bdbdbd','#cd7f32'];
+          const barClr  = i===0?'#FFD700':i===1?'rgba(255,255,255,0.55)':'rgba(205,127,50,0.85)';
+          const tieNote = i>0 && p.winRate===d.topWinRate[i-1].winRate ? ' · nhiều trận hơn' : '';
+          return `<div class="top-item">
+            <div class="top-rank ${rankCls(i)}">${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">${p.name}
+                <span style="color:rgba(255,255,255,0.35);font-size:9px;font-weight:400">(${p.wins}W/${p.tran} trận${tieNote})</span>
+              </div>
+              <div class="top-bar-track">
+                <div class="top-bar-fill" style="width:${Math.round(p.winRate/maxRate*100)}%;background:${barClr}"></div>
+              </div>
+            </div>
+            <div class="top-val" style="color:${i<3?colors[i]:'rgba(255,255,255,0.6)'}">${p.winRate}<span style="font-size:11px;font-weight:400">%</span></div>
           </div>`;
         }).join('')}
-      </div>
+        </div>`
+      }
     </div>
+
 
     <!-- ── Lịch sử đối đầu ── -->
     <div class="card">

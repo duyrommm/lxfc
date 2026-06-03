@@ -284,6 +284,45 @@ body {
   text-align: center; margin-top: 16px;
   color: rgba(255,255,255,0.2); font-size: 10px;
 }
+
+/* ── Lucky charm / winrate-sub ── */
+.winrate-sub { font-size: 9px; color: rgba(255,255,255,0.35); font-weight: 400; margin-left: 4px; }
+
+/* ── Absence redesign ── */
+.absence-item {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 9px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+}
+.absence-item:last-child { margin-bottom: 0; }
+.absence-header { display: flex; align-items: center; justify-content: space-between; }
+.absence-name   { font-size: 12px; font-weight: 700; color: #fff; }
+.absence-badge  {
+  font-size: 9px; font-weight: 700; padding: 2px 8px;
+  border-radius: 10px; white-space: nowrap;
+}
+.absence-badge.danger { background: rgba(244,67,54,0.18);  color: #ef9a9a; border: 1px solid rgba(244,67,54,0.3); }
+.absence-badge.warn   { background: rgba(255,152,0,0.18);  color: #ffcc80; border: 1px solid rgba(255,152,0,0.3); }
+.absence-badge.watch  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.1); }
+.absence-meta   { font-size: 10px; color: rgba(255,255,255,0.4); }
+.absence-bar-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.absence-bar-fill  { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+/* ── Stadium stats ── */
+.stadium-list { display: flex; flex-direction: column; gap: 7px; }
+.stadium-row  { display: flex; flex-direction: column; gap: 4px; }
+.stadium-header { display: flex; align-items: center; justify-content: space-between; }
+.stadium-name { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.stadium-wdl  { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.stadium-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; font-family: 'Oswald', sans-serif; }
+.stadium-badge.w { background: rgba(76,175,80,0.2); color: #4caf50; }
+.stadium-badge.d { background: rgba(255,152,0,0.2); color: #ff9800; }
+.stadium-badge.l { background: rgba(244,67,54,0.2); color: #f44336; }
+.stadium-goals { font-size: 10px; color: rgba(255,255,255,0.35); }
+.stadium-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.stadium-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(to right, #4caf50, #2e7d32); }
 </style>
 </head>
 <body>
@@ -525,20 +564,14 @@ function renderDashboard(d) {
 
     <!-- ── Lucky charm: Tỉ lệ thắng ── -->
     <div class="card">
-      <div class="card-title">🍀 Linh Vật — tỉ lệ thắng</div>
+      <div class="card-title">🍀 Lucky charm — tỉ lệ thắng</div>
       <div class="top-list" id="lucky-list"></div>
     </div>
 
-    <!-- ── Chuỗi trận hiện tại ── -->
+    <!-- ── Sân thi đấu ── -->
     <div class="card">
-      <div class="card-title">🔥 Chuỗi trận hiện tại</div>
-      <div id="streak-card"></div>
-    </div>
-
-    <!-- ── Sparkline điểm tích lũy ── -->
-    <div class="card">
-      <div class="card-title">📈 Điểm tích lũy mùa giải</div>
-      <div id="sparkline-card"></div>
+      <div class="card-title">🏟️ Hiệu suất theo sân</div>
+      <div class="stadium-list" id="stadium-list"></div>
     </div>
 
     <!-- ── Tường thành: cleanRate ── -->
@@ -556,18 +589,18 @@ function renderDashboard(d) {
     <!-- ── Vắng mặt đáng lo ngại ── -->
     <div class="card">
       <div class="card-title">⚠️ Vắng mặt đáng lo ngại</div>
-      <div class="absence-list" id="absence-list"></div>
+      <div id="absence-wrap"></div>
     </div>
 
   `;
 
   // ── Render Lucky Charm ──
-  renderTopList('lucky-list', d.topWinRate || [], (p, i) => {
-    const maxRate = (d.topWinRate[0] || {}).winRate || 1;
-    const barClr  = i===0 ? '#FFD700' : i===1 ? 'rgba(255,255,255,0.55)' : 'rgba(205,127,50,0.85)';
-    const cols    = ['#FFD700','#bdbdbd','#cd7f32'];
-    const tieNote = i > 0 && p.winRate === d.topWinRate[i-1].winRate ? ' · TB' : '';
-    const el = document.createElement('div');
+  renderTopList('lucky-list', d.topWinRate || [], function(p, i) {
+    var maxRate = ((d.topWinRate||[])[0] || {}).winRate || 1;
+    var barClr  = i===0 ? '#FFD700' : i===1 ? 'rgba(255,255,255,0.55)' : 'rgba(205,127,50,0.85)';
+    var cols    = ['#FFD700','#bdbdbd','#cd7f32'];
+    var tieNote = i > 0 && p.winRate === d.topWinRate[i-1].winRate ? ' · TB' : '';
+    var el = document.createElement('div');
     el.className = 'top-item';
     el.innerHTML =
       '<div class="top-rank ' + rankCls(i) + '">' + (i+1) + '</div>' +
@@ -579,61 +612,34 @@ function renderDashboard(d) {
     return el;
   }, 'Chưa đủ dữ liệu (cần ≥5 trận)');
 
-  // ── Render Streak ──
+  // ── Render Stadium Stats ──
   (function() {
-    const el = document.getElementById('streak-card');
-    if (!el) return;
-    const s = d.currentStreak || { type: '', count: 0 };
-    if (!s.count) { el.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px">Chưa có dữ liệu</div>'; return; }
-    const colorMap = { W: '#4caf50', D: '#ff9800', L: '#f44336' };
-    const textMap  = { W: 'thắng liên tiếp 🔥', D: 'hòa liên tiếp', L: 'thua liên tiếp' };
-    let badges = '';
-    (d.recentForm || []).slice(0,7).forEach(function(r) {
-      badges += '<div class="result-badge ' + r + '">' + r + '</div>';
+    var wrap = document.getElementById('stadium-list');
+    if (!wrap) return;
+    var list = d.stadiumStats || [];
+    if (!list.length) {
+      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">Chưa có dữ liệu sân</div>';
+      return;
+    }
+    var maxMatches = list[0].total || 1;
+    list.forEach(function(s) {
+      var winPct = s.total > 0 ? Math.round(s.w / s.total * 100) : 0;
+      var barPct = Math.round(s.total / maxMatches * 100);
+      var row = document.createElement('div');
+      row.className = 'stadium-row';
+      row.innerHTML =
+        '<div class="stadium-header">' +
+          '<div class="stadium-name" title="' + s.name + '">' + s.name + '</div>' +
+          '<div class="stadium-wdl">' +
+            (s.w > 0 ? '<span class="stadium-badge w">' + s.w + 'W</span>' : '') +
+            (s.d > 0 ? '<span class="stadium-badge d">' + s.d + 'D</span>' : '') +
+            (s.l > 0 ? '<span class="stadium-badge l">' + s.l + 'L</span>' : '') +
+            '<span class="stadium-goals">' + s.gf + ':' + s.ga + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="stadium-bar"><div class="stadium-bar-fill" style="width:' + barPct + '%"></div></div>';
+      wrap.appendChild(row);
     });
-    el.innerHTML =
-      '<div class="streak-badges">' + badges + '</div>' +
-      '<div class="streak-big" style="color:' + (colorMap[s.type]||'#fff') + '">' + s.count + ' trận ' + (textMap[s.type]||'') + '</div>' +
-      '<div class="streak-label">Dựa trên ' + (d.recentForm||[]).length + ' trận gần nhất</div>';
-  })();
-
-  // ── Render Sparkline ──
-  (function() {
-    const el = document.getElementById('sparkline-card');
-    if (!el) return;
-    var tl = d.pointsTimeline || [];
-    if (tl.length < 2) { el.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:16px 0">Chưa đủ dữ liệu</div>'; return; }
-    var pts = tl.map(function(t){ return t.pts; });
-    var maxPts = Math.max.apply(null, pts) || 1;
-    var W = 260, H = 56;
-    var pointsStr = tl.map(function(t, i) {
-      var x = Math.round(i / (tl.length - 1) * W);
-      var y = Math.round(H - (t.pts / maxPts) * H);
-      return x + ',' + y;
-    }).join(' ');
-    var lastPts = pts[pts.length - 1];
-    var months = {};
-    tl.forEach(function(t, i) { var m = t.date.slice(3); if (!months[m]) months[m] = i; });
-    var mlabels = Object.keys(months).map(function(m) {
-      var x = Math.round(months[m] / (tl.length - 1) * W);
-      return '<text x="' + x + '" y="72" fill="rgba(255,255,255,0.3)" font-size="9" text-anchor="middle">T' + m.split('/')[0] + '</text>';
-    }).join('');
-    el.innerHTML =
-      '<div class="spark-wrap">' +
-        '<svg viewBox="0 0 ' + W + ' 75" preserveAspectRatio="none">' +
-          '<defs><linearGradient id="spg" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%" stop-color="#4caf50" stop-opacity="0.3"/>' +
-            '<stop offset="100%" stop-color="#4caf50" stop-opacity="0"/>' +
-          '</linearGradient></defs>' +
-          '<polygon points="' + pointsStr + ' ' + W + ',' + H + ' 0,' + H + '" fill="url(#spg)"/>' +
-          '<polyline points="' + pointsStr + '" fill="none" stroke="#4caf50" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
-          mlabels +
-        '</svg>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">' +
-        '<span style="font-size:10px;color:rgba(255,255,255,0.4)">' + tl[0].date + ' → ' + tl[tl.length-1].date + '</span>' +
-        '<span style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;color:#4caf50">' + lastPts + ' pts</span>' +
-      '</div>';
   })();
 
   // ── Render Clean Rate ──
@@ -666,34 +672,38 @@ function renderDashboard(d) {
     return el;
   }, 'Chưa đủ dữ liệu');
 
-  // ── Render Absence Warnings ──
+  // ── Render Absence Warnings (redesign) ──
   (function() {
-    var el = document.getElementById('absence-list');
-    if (!el) return;
+    var wrap = document.getElementById('absence-wrap');
+    if (!wrap) return;
     var list = d.absenceWarnings || [];
     if (!list.length) {
-      el.outerHTML = '<div style="text-align:center;padding:20px;color:#4caf50;font-size:12px">✅ Tất cả đang duy trì chuyên cần tốt!</div>';
+      wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#4caf50;font-size:12px">✅ Tất cả đang duy trì chuyên cần tốt!</div>';
       return;
     }
+    var maxMissed = list[0].missedCount || 1;
     list.forEach(function(p) {
-      var cls    = p.missedCount >= 4 ? 'danger' : p.missedCount >= 3 ? 'warn' : 'watch';
-      var dotClr = p.missedCount >= 4 ? '#f44336' : p.missedCount >= 3 ? '#ff9800' : 'rgba(255,255,255,0.35)';
-      var lbl    = p.missedCount >= 4 ? 'Báo động' : p.missedCount >= 3 ? 'Cảnh báo' : 'Theo dõi';
-      var row    = document.createElement('div');
-      row.className = 'absence-row';
-      row.innerHTML =
-        '<div class="absence-dot" style="background:' + dotClr + '"></div>' +
-        '<div class="absence-name">' + p.name + '</div>' +
-        '<div class="absence-days">vắng ' + p.missedCount + ' trận · ' + p.missedDays + 'ng</div>' +
-        '<div class="absence-badge ' + cls + '">' + lbl + '</div>';
-      el.appendChild(row);
+      var cls  = p.missedCount >= 4 ? 'danger' : p.missedCount >= 3 ? 'warn' : 'watch';
+      var lbl  = p.missedCount >= 4 ? '🔴 Báo động' : p.missedCount >= 3 ? '🟠 Cảnh báo' : '🟡 Theo dõi';
+      var barClr = p.missedCount >= 4 ? '#f44336' : p.missedCount >= 3 ? '#ff9800' : 'rgba(255,255,255,0.25)';
+      var barPct = Math.round(p.missedCount / maxMissed * 100);
+      var item = document.createElement('div');
+      item.className = 'absence-item';
+      item.innerHTML =
+        '<div class="absence-header">' +
+          '<div class="absence-name">' + p.name + '</div>' +
+          '<div class="absence-badge ' + cls + '">' + lbl + '</div>' +
+        '</div>' +
+        '<div class="absence-meta">Vắng <strong>' + p.missedCount + '</strong> trận liên tiếp · ' + p.missedDays + ' ngày kể từ trận cuối</div>' +
+        '<div class="absence-bar-track"><div class="absence-bar-fill" style="width:' + barPct + '%;background:' + barClr + '"></div></div>';
+      wrap.appendChild(item);
     });
   })();
 
   document.getElementById('updated').textContent = `Mùa giải 2026 · Cập nhật: ${d.updatedAt}`;
 }
 
-// ── Helper: render top list với DOM (tránh template literal lồng nhau) ──
+// ── Helper: render top list ──
 function renderTopList(elId, arr, buildFn, emptyMsg) {
   var el = document.getElementById(elId);
   if (!el) return;

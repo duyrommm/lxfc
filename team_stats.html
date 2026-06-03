@@ -284,6 +284,37 @@ body {
   text-align: center; margin-top: 16px;
   color: rgba(255,255,255,0.2); font-size: 10px;
 }
+
+/* ── Lucky charm / Win rate ── */
+.winrate-sub { font-size: 9px; color: rgba(255,255,255,0.35); font-weight: 400; margin-left: 4px; }
+
+/* ── Streak card ── */
+.streak-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.streak-big {
+  font-family: 'Oswald', sans-serif;
+  font-size: 26px; font-weight: 700; line-height: 1;
+}
+.streak-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+
+/* ── Sparkline ── */
+.spark-wrap { height: 64px; position: relative; margin: 6px 0 2px; }
+.spark-wrap svg { width: 100%; height: 100%; overflow: visible; }
+.spark-months { display: flex; justify-content: space-between; font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+/* ── Absence warnings ── */
+.absence-list { display: flex; flex-direction: column; gap: 7px; }
+.absence-row { display: flex; align-items: center; gap: 8px; }
+.absence-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.absence-name { flex: 1; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.absence-days { font-size: 10px; color: rgba(255,255,255,0.45); flex-shrink: 0; }
+.absence-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+.absence-badge.danger { background: rgba(244,67,54,0.2); color: #f44336; }
+.absence-badge.warn   { background: rgba(255,152,0,0.2);  color: #ff9800; }
+.absence-badge.watch  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+
+/* ── Contrib rate ── */
+.contrib-pos { font-size: 9px; color: rgba(255,255,255,0.4); margin-left: 4px; font-weight: 400; }
+
 </style>
 </head>
 <body>
@@ -522,8 +553,143 @@ function renderDashboard(d) {
       </div>
     </div>
 
-  `;
 
+    <!-- ── Lucky charm: Tỉ lệ thắng ── -->
+    <div class="card">
+      <div class="card-title">🍀 Linh vật — tỉ lệ thắng</div>
+      <div class="top-list">
+        ${(d.topWinRate||[]).map((p,i) => {
+          const maxRate = d.topWinRate[0].winRate || 1;
+          const barClr = i===0?'#FFD700':i===1?'rgba(255,255,255,0.55)':'rgba(205,127,50,0.85)';
+          const cols   = ['#FFD700','#bdbdbd','#cd7f32'];
+          const tieNote = i>0 && p.winRate===d.topWinRate[i-1].winRate ? ' · TB' : '';
+          return \`<div class="top-item">
+            <div class="top-rank \${rankCls(i)}">\${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">\${p.name}<span class="winrate-sub">(\${p.wins}W/\${p.tran} trận\${tieNote})</span></div>
+              <div class="top-bar-track"><div class="top-bar-fill" style="width:\${Math.round(p.winRate/maxRate*100)}%;background:\${barClr}"></div></div>
+            </div>
+            <div class="top-val" style="color:\${i<3?cols[i]:'rgba(255,255,255,0.6)'}">\${p.winRate}<span style="font-size:11px;font-weight:400">%</span></div>
+          </div>\`;
+        }).join('')}
+        ${(!d.topWinRate||d.topWinRate.length===0)?'<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:11px">Chưa đủ dữ liệu (cần ≥5 trận)</div>':''}
+      </div>
+    </div>
+
+    <!-- ── Chuỗi trận hiện tại ── -->
+    <div class="card">
+      <div class="card-title">🔥 Chuỗi trận hiện tại</div>
+      ${(() => {
+        const s = d.currentStreak || { type:'', count:0 };
+        if (!s.count) return '<div style="color:rgba(255,255,255,0.3);font-size:11px">Chưa có dữ liệu</div>';
+        const badges = d.recentForm.slice(0,7).map(r=>`<div class="result-badge ${r}">${r}</div>`).join('');
+        const label = s.type==='W' ? `<span style="color:#4caf50">${s.count} trận thắng liên tiếp</span>` :
+                      s.type==='D' ? `<span style="color:#ff9800">${s.count} trận hòa liên tiếp</span>` :
+                                     `<span style="color:#f44336">${s.count} trận thua liên tiếp</span>`;
+        return \`<div class="streak-badges">\${badges}</div>
+          <div class="streak-big">\${label}</div>
+          <div class="streak-label">Dựa trên \${d.recentForm.length} trận gần nhất</div>\`;
+      })()}
+    </div>
+
+    <!-- ── Sparkline điểm tích lũy ── -->
+    <div class="card">
+      <div class="card-title">📈 Điểm tích lũy mùa giải</div>
+      ${(() => {
+        const tl = d.pointsTimeline || [];
+        if (tl.length < 2) return '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:16px 0">Chưa đủ dữ liệu</div>';
+        const pts = tl.map(t=>t.pts);
+        const maxPts = Math.max(...pts) || 1;
+        const W = 260, H = 56;
+        const points = tl.map((t,i) => {
+          const x = Math.round(i / (tl.length-1) * W);
+          const y = Math.round(H - (t.pts / maxPts) * H);
+          return \`\${x},\${y}\`;
+        }).join(' ');
+        const lastPts = pts[pts.length-1];
+        // month labels: lấy tháng đầu mỗi tháng
+        const months = {};
+        tl.forEach((t,i)=>{ const m=t.date.slice(3); if(!months[m]) months[m]=i; });
+        const mlabels = Object.entries(months).map(([m,i])=>{
+          const x = Math.round(i/(tl.length-1)*W);
+          return \`<text x="\${x}" y="72" fill="rgba(255,255,255,0.3)" font-size="9" text-anchor="middle">T\${m.split('/')[0]}</text>\`;
+        }).join('');
+        return \`<div class="spark-wrap"><svg viewBox="0 0 \${W} 75" preserveAspectRatio="none">
+          <defs><linearGradient id="spg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4caf50" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#4caf50" stop-opacity="0"/>
+          </linearGradient></defs>
+          <polygon points="\${points} \${W},\${H} 0,\${H}" fill="url(#spg)"/>
+          <polyline points="\${points}" fill="none" stroke="#4caf50" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          \${mlabels}
+        </svg></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span style="font-size:10px;color:rgba(255,255,255,0.4)">\${tl[0].date} → \${tl[tl.length-1].date}</span>
+          <span style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:#4caf50">\${lastPts} pts</span>
+        </div>\`;
+      })()}
+    </div>
+
+    <!-- ── Tường thành: cleanRate ── -->
+    <div class="card">
+      <div class="card-title">🧤 Tường thành — giữ sạch lưới</div>
+      <div class="top-list">
+        ${(d.topCleanRate||[]).map((p,i) => {
+          const maxRate = (d.topCleanRate[0]||{}).cleanRate || 1;
+          return \`<div class="top-item">
+            <div class="top-rank \${rankCls(i)}">\${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">\${p.name}<span class="winrate-sub">(\${p.tran} trận)</span></div>
+              <div class="top-bar-track"><div class="top-bar-fill" style="width:\${Math.round(p.cleanRate/maxRate*100)}%;background:#00acc1"></div></div>
+            </div>
+            <div class="top-val" style="color:#00acc1">\${p.cleanRate}<span style="font-size:11px;font-weight:400">%</span></div>
+          </div>\`;
+        }).join('')}
+        ${(!d.topCleanRate||d.topCleanRate.length===0)?'<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:11px">Chưa đủ dữ liệu</div>':''}
+      </div>
+    </div>
+
+    <!-- ── Đóng góp bàn thắng ── -->
+    <div class="card">
+      <div class="card-title">⚡ Đóng góp bàn thắng</div>
+      <div class="top-list">
+        ${(d.topContribRate||[]).map((p,i) => {
+          const maxRate = (d.topContribRate[0]||{}).contribRate || 1;
+          return \`<div class="top-item">
+            <div class="top-rank \${rankCls(i)}">\${i+1}</div>
+            <div class="top-bar-wrap">
+              <div class="top-name">\${p.name}<span class="winrate-sub">(\${p.gf} bàn+kiến tạo)</span></div>
+              <div class="top-bar-track"><div class="top-bar-fill" style="width:\${Math.round(p.contribRate/maxRate*100)}%;background:#ab47bc"></div></div>
+            </div>
+            <div class="top-val" style="color:#ab47bc">\${p.contribRate}<span style="font-size:11px;font-weight:400">%</span></div>
+          </div>\`;
+        }).join('')}
+        ${(!d.topContribRate||d.topContribRate.length===0)?'<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:11px">Chưa đủ dữ liệu</div>':''}
+      </div>
+    </div>
+
+    <!-- ── Vắng mặt đáng lo ngại ── -->
+    <div class="card">
+      <div class="card-title">⚠️ Vắng mặt đáng lo ngại</div>
+      ${(!d.absenceWarnings||d.absenceWarnings.length===0)
+        ? '<div style="text-align:center;padding:20px;color:#4caf50;font-size:12px">✅ Tất cả đang duy trì chuyên cần tốt!</div>'
+        : `<div class="absence-list">
+          ${d.absenceWarnings.map(p => {
+            const cls = p.missedCount>=4 ? 'danger' : p.missedCount>=3 ? 'warn' : 'watch';
+            const dotClr = p.missedCount>=4?'#f44336':p.missedCount>=3?'#ff9800':'rgba(255,255,255,0.35)';
+            const lbl = p.missedCount>=4?'Báo động':p.missedCount>=3?'Cảnh báo':'Theo dõi';
+            return \`<div class="absence-row">
+              <div class="absence-dot" style="background:\${dotClr}"></div>
+              <div class="absence-name">\${p.name}</div>
+              <div class="absence-days">vắng \${p.missedCount} trận · \${p.missedDays}ng</div>
+              <div class="absence-badge \${cls}">\${lbl}</div>
+            </div>\`;
+          }).join('')}
+        </div>`
+      }
+    </div>
+
+  `;
   document.getElementById('updated').textContent = `Mùa giải 2026 · Cập nhật: ${d.updatedAt}`;
 }
 

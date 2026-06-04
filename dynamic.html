@@ -278,11 +278,12 @@ body {
 
 /* Close btn */
 .modal-close {
-  position: absolute; top: 12px; right: 14px;
-  background: rgba(255,255,255,0.1); border: none;
-  color: #fff; width: 28px; height: 28px; border-radius: 50%;
-  font-size: 16px; cursor: pointer; line-height: 28px; text-align: center;
-  transition: background 0.15s;
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(0,0,0,0.45); border: 1.5px solid rgba(255,255,255,0.2);
+  color: #fff; width: 30px; height: 30px; border-radius: 50%;
+  font-size: 15px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; z-index: 10;
 }
 .modal-close:hover { background: rgba(255,255,255,0.2); }
 
@@ -647,8 +648,7 @@ body {
 <!-- ── Modal Stats ── -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal">
-    <button class="modal-close" id="modal-close">✕</button>
-
+    <button class="modal-close" id="modal-close" title="Đóng">✕</button>
     <div class="modal-header">
       <div class="modal-avatar" id="modal-avatar">
         <span class="ini" id="modal-ini"></span>
@@ -656,12 +656,12 @@ body {
       <div class="modal-info">
         <div class="modal-name" id="modal-name"></div>
         <div class="modal-pos-row">
+          <span class="modal-id-badge" id="modal-id" style="background:rgba(0,0,0,0.3);color:rgba(255,255,255,0.4);font-size:10px;padding:1px 7px;border-radius:8px;border:1px solid rgba(255,255,255,0.12)"></span>
           <span class="modal-so-ao" id="modal-so-ao"></span>
           <span class="modal-pos"   id="modal-pos"></span>
         </div>
         <div id="modal-role-badge" style="margin-top:6px"></div>
       </div>
-      <div class="modal-id-badge" id="modal-id"></div>
     </div>
 
     <!-- Tổng điểm breakdown -->

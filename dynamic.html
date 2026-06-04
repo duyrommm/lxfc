@@ -482,6 +482,58 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 #tooltip.show { display: block; }
+
+/* ── Bio section trong modal ── */
+.modal-bio {
+  padding: 14px 18px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.bio-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.bio-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1.2px; text-transform: uppercase;
+}
+.bio-text {
+  font-size: 11.5px; line-height: 1.7;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid rgba(255,215,0,0.4);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 12px;
+}
+.bio-text em {
+  color: #FFD700; font-style: normal; font-weight: 600;
+}
+
+/* ── Club intro banner ── */
+.club-intro {
+  margin: 12px 18px;
+  background: rgba(255,215,0,0.05);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.club-intro-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; color: #FFD700;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.club-intro-text {
+  font-size: 10.5px; line-height: 1.65;
+  color: rgba(255,255,255,0.6);
+}
+.club-intro-slogan {
+  margin-top: 8px;
+  font-size: 10px; font-style: italic;
+  color: rgba(255,215,0,0.7);
+  text-align: center;
+}
 </style>
 <body>
 
@@ -589,8 +641,23 @@ body {
     <!-- Bar charts -->
     <div class="modal-bars" id="modal-bars"></div>
 
+    <!-- Club intro banner -->
+    <div class="club-intro" id="modal-club-intro" style="display:none">
+      <div class="club-intro-title">⚽ LONGXUYEN FC</div>
+      <div class="club-intro-text">Thành lập <strong>23/10/2010</strong> với nòng cốt là những người con Long Xuyên, An Giang tại TP.HCM. Màu áo <strong>xanh lá & vàng</strong> tượng trưng cho cánh đồng và cây lúa miền Tây.</div>
+      <div class="club-intro-slogan">"Mồ hôi · Sức khỏe · Ly bia lạnh · Tình bạn · Nụ cười"</div>
+    </div>
+
     <!-- Stat grid -->
     <div class="modal-grid" id="modal-grid"></div>
+
+    <!-- Bio section -->
+    <div class="modal-bio" id="modal-bio" style="display:none">
+      <div class="bio-header">
+        <div class="bio-title">📖 Tiểu sử</div>
+      </div>
+      <div class="bio-text" id="bio-text"></div>
+    </div>
 
     <!-- Advanced stats -->
     <div class="modal-advanced" id="modal-advanced"></div>
@@ -643,6 +710,32 @@ function hideTip() { tip.classList.remove('show'); }
 
 // Track selected element
 let selectedEl = null;
+
+
+// ── Bio data từ tài liệu du đấu Phan Thiết ──
+const PLAYER_BIO = {
+  'Duy Bono': 'SN 1992 · Gắn bó LXFC hơn <em>10 năm</em> · Công việc: <em>IT</em>. Tính cách vui vẻ, hòa đồng. Điểm yếu: dễ mất tự tin, bị tâm lý. Điểm mạnh: đôi khi bắt gôn <em>như lên đồng!</em>',
+  'Tú Vịt': 'SN 1992 · Quê Long Xuyên, cựu học sinh <em>Trường chuyên Thoại Ngọc Hầu</em>. CEO Cty Gạo Hữu cơ <em>Hoa Nắng</em>, từng gọi vốn thành công trên <em>Shark Tank</em>. Gạo Hoa Nắng đã xuất khẩu sang thị trường Mỹ. Gắn bó LXFC từ những ngày đầu thành lập.',
+  'Thịnh Rượu Vang': 'SN 1989 · Chủ shop <em>Rượu Thu Hà</em> - 67 Phan Xích Long, P.2, Q.Phú Nhuận. Tính tình hiền lành, ít chơi nhưng chơi là tới công chuyện. <em>Password "fan hâm mộ LONGXUYEN FC"</em> để được giảm giá.',
+  'Tô Sáng': 'SN 1992 · Quê Phan Rí, Bình Thuận. Chủ cửa tiệm <em>Nhôm kính Gò Vấp</em> (nhomkinhgovap.com). Kinh doanh thêm xây dựng và phòng tập gym <em>ST FITNESS & YOGA</em> - 47 Bàu Cát 1, P.14, Q.Tân Bình. Body 6 múi, mạnh mẽ trên sân, đẹp trai ngoài sân.',
+  'Lộc Nhật': 'SN 1991 · Quê Chợ Mới, An Giang. Quản lý Nhà hàng <em>Kakinoki</em> - 12E Phạm Viết Chánh, P.19, Bình Thạnh. Từng sống và làm việc nhiều năm tại <em>Nhật Bản</em> trong ngành nhà hàng, cũng là đầu bếp chuyên nghiệp.',
+  'Thái Cris': 'SN 1991 · Dân Long Xuyên chính hiệu, cựu học sinh Trường chuyên Thoại Ngọc Hầu. Quản lý <em>Thẩm mỹ viện Thanh Tuyền</em> - 44 Huỳnh Tịnh Của, P.Võ Thị Sáu, Q.3. <em>Password "fan hâm mộ LONGXUYEN FC"</em> để được giảm giá dịch vụ làm đẹp.',
+  'Thầy Ông Ngoại': 'SN 1980 · Quê cha Vĩnh Long, quê mẹ Châu Phú, An Giang. Có công ty riêng <em>SUCCESS PARTNER</em> chuyên tư vấn & đào tạo nhân sự. Nổi tiếng hào hoa phong nhã với kỷ lục <em>3 đời vợ</em> tại LXFC.',
+  'Teddy': 'SN 1983 · Em ruột của bầu Rainy. Quê Long Xuyên, An Giang. Công tác tại Cty lốp xe <em>SAILUN</em>. Từng bị đứt dây chằng và đã mổ, hiện thi đấu khoảng 60-70% khả năng. Đặc biệt: <em>thuận chân trái và sút phạt rất nguy hiểm!</em>',
+  'Nam 3 Phi': 'SN 1991 · Quê Chợ Mới, An Giang. Tính cách vui vẻ hài hước, hay kể chuyện cười tiếu lâm kiểu <em>Bác Ba Phi</em> nên có nickname Nam 3 Phi.',
+  'Thần Số': 'SN 1991 · Công tác tại <em>Cty Vé số Vietlott</em>. Lần đầu du đấu cùng LXFC và dắt cả gia đình cùng đi. Có thể liên hệ để <em>mở đại lý Vietlott</em>.',
+  'Lee Min Hòa': 'SN 1996 · Quê Ninh Thuận. Dù còn trẻ nhưng có <em>xưởng sản xuất đàn guitar và piano</em> riêng, chuyên cung cấp cho các trung tâm âm nhạc tại TP.HCM và cả nước. Hiện vẫn <em>độc thân vui tính</em>.',
+  'Cường Media': 'SN 2002 · Anh họ của Thái Cris (số 7). Quê Long Xuyên, An Giang. Làm việc tại <em>Thẩm mỹ viện Thanh Tuyền</em>, phụ trách mảng <em>media của LXFC</em>: chụp hình, quay phim, thiết kế đồ họa. Sở thích: <em>sơn móng tay!</em>',
+  'Bé Bửu': 'SN 1986 · Quê Chợ Mới, An Giang, làm việc trong lĩnh vực xây dựng. Chuyên gia comment dạo với câu cửa miệng <em>"dễ cưng quá ah"</em>.',
+  'Đạt Tokuda': 'SN 1988 · Quê Đà Lạt. Rất vui tính và rất thương vợ lẫn <em>sợ vợ</em>. Số áo 49 chính là số xe Đà Lạt, Lâm Đồng.',
+  'Kha Khờ Khạo': 'SN 2000 · Quê Cần Thơ, Gen Z, làm việc trong lĩnh vực <em>điện công nghiệp</em>. Được xem là <em>cậu út LXFC</em>, tham gia từ khi còn là sinh viên. Số áo 65 là số xe Cần Thơ.',
+  'Tân Hai Thuế': 'U50 · Sống tại TP.Long Xuyên, chủ <em>quán cơm Hai Thuế</em> ngay trung tâm thành phố — hầu như ai ở Long Xuyên cũng biết. Tham gia LXFC cả chục năm, mỗi khi có du đấu luôn tranh thủ sắp xếp tham gia. Số áo 67 là số xe An Giang.',
+  'Hùng Bóng': 'SN 1984 · Quê Quảng Bình. Tham gia LXFC 3-4 năm, đang giữ vị trí <em>CFO - phụ trách tài chính</em>. Chủ cty quảng cáo <em>EraAd</em> với logo đỏ ngay trước áo đấu LXFC — chuyên thi công bảng hiệu, hộp đèn, chữ nổi, decal. Số áo 73 là số xe Quảng Bình.',
+  'Anthony Baby': 'SN 1981 · Công tác ngành <em>du lịch</em> tại TP.HCM. Thành viên trầm lặng, ít nói nhưng nhiệt huyết. Tham gia LXFC <em>10 năm</em>, từng là đồng nghiệp của bầu Rainy. Được bầu chọn là <em>"QUẢ TIM VÀNG LXFC 2023"</em>.',
+  'Thầy Ông Nội': 'SN 1979 · Quê gốc Quảng Nam. Kinh doanh nhà hàng, vừa khai trương <em>Ẩm thực Nàng Kiều</em> - 09 Đ.Lê Hữu Kiều, P.Bình Trưng Tây, TP.Thủ Đức. Cũng là đầu bếp nhiều năm kinh nghiệm. <em>Password "fan hâm mộ LONGXUYEN FC"</em> để được giảm giá.',
+  'Biminho': 'SN 1988 · Quê Nha Trang, Khánh Hòa. Tham gia LXFC 10 năm. Dù không còn sống tại TP.HCM nhưng mỗi khi LXFC du đấu luôn lái oto đưa cả gia đình tham gia. Trên sân: <em>mạnh mẽ, chắc chắn</em>. Ngoài sân: nhẹ nhàng, đôi khi có phần nữ tính.',
+  'Bầu Rainy': 'SN 1981 · Anh ruột Teddy (số 10). Quê Long Xuyên, từng là thành viên đội tuyển bóng đá ĐH KHXH&NV TP.HCM. Là <em>1 trong những thành viên sáng lập LXFC</em> và duy trì đến ngày nay. Ae hay gọi thân thương là <em>"bầu osin"</em> vì việc gì trong LXFC anh cũng làm.',
+};
 
 // ── Open modal ──
 function openModal(p, isStarter) {
@@ -779,6 +872,25 @@ function openModal(p, isStarter) {
     </div>`;
 
   advEl.innerHTML = advCards;
+
+  // ── Club intro: hiện cho tất cả ──
+  document.getElementById('modal-club-intro').style.display = 'block';
+
+  // ── Bio section ──
+  const bioEl  = document.getElementById('modal-bio');
+  const bioTxt = document.getElementById('bio-text');
+  // Tìm theo tên chính xác, hoặc tên viết hoa, hoặc match một phần
+  const bioKey = Object.keys(PLAYER_BIO).find(k =>
+    k.toLowerCase() === (p.ten || '').toLowerCase() ||
+    (p.ten || '').toLowerCase().includes(k.toLowerCase()) ||
+    k.toLowerCase().includes((p.ten || '').toLowerCase())
+  );
+  if (bioKey) {
+    bioTxt.innerHTML = PLAYER_BIO[bioKey];
+    bioEl.style.display = 'block';
+  } else {
+    bioEl.style.display = 'none';
+  }
 
   document.getElementById('modal-overlay').classList.add('show');
 }

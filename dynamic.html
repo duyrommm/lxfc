@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LXFC - Best XI</title>
+<title>LXFC - BEST XI</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -489,7 +489,7 @@ body {
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 .bio-header {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px;
 }
 .bio-title {
@@ -498,6 +498,14 @@ body {
   color: rgba(255,255,255,0.4);
   letter-spacing: 1.2px; text-transform: uppercase;
 }
+.bio-close {
+  background: rgba(255,255,255,0.08); border: none;
+  color: rgba(255,255,255,0.5); width: 22px; height: 22px;
+  border-radius: 50%; font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; flex-shrink: 0;
+}
+.bio-close:hover { background: rgba(255,255,255,0.18); color: #fff; }
 .bio-text {
   font-size: 11.5px; line-height: 1.7;
   color: rgba(255,255,255,0.75);
@@ -640,7 +648,6 @@ body {
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal">
     <button class="modal-close" id="modal-close">✕</button>
-    <div class="modal-id-badge" id="modal-id"></div>
 
     <div class="modal-header">
       <div class="modal-avatar" id="modal-avatar">
@@ -687,6 +694,7 @@ body {
     <div class="modal-bio" id="modal-bio" style="display:none">
       <div class="bio-header">
         <div class="bio-title">📖 Tiểu sử</div>
+        <button class="bio-close" onclick="closeModal()" title="Đóng">✕</button>
       </div>
       <div class="bio-text" id="bio-text"></div>
     </div>

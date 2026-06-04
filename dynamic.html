@@ -54,11 +54,12 @@ body {
 .main-col { flex: 1; min-width: 0; }
 
 /* ── Title ── */
-.title-bar { text-align: center; margin-bottom: 14px; }
+.title-bar { text-align: center; margin-bottom: 14px; width: 100%; }
 .title-bar h1 {
   font-family: 'Oswald', sans-serif;
   font-size: 26px; color: #FFD700;
   letter-spacing: 2px; font-weight: 700; line-height: 1;
+  text-align: center;
 }
 .meta { color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 
@@ -575,6 +576,22 @@ body {
 </script>
 
 <!-- Nav links - thay STATS_URL bằng URL của team_stats.html sau khi host -->
+<!-- ── Club intro section ── -->
+<div class="club-section">
+  <div class="club-badge">⚽</div>
+  <div class="club-body">
+    <div class="club-name">LONGXUYEN FC</div>
+    <div class="club-founded">📅 Thành lập 23/10/2010</div>
+    <div class="club-desc">
+      Nòng cốt ban đầu là những người con <strong>Long Xuyên, An Giang</strong> đang học tập, làm việc tại TP.HCM. 
+      Màu áo truyền thống <strong>xanh lá & vàng</strong> tượng trưng cho cánh đồng và cây lúa miền Tây.<br>
+      Tiêu chí: rèn luyện sức khỏe với bóng đá, sau đó cùng ngồi lại gắn kết, hỗ trợ nhau trong công việc và cuộc sống. 
+      <strong>Thắng thua không phải điều quan trọng</strong> — một tập thể đoàn kết, vững mạnh mới là điều LXFC quan tâm.
+    </div>
+    <div class="club-slogan">"Mồ hôi · Sức khỏe · Ly bia lạnh · Tình bạn · Nụ cười"</div>
+  </div>
+</div>
+
 <nav class="nav">
   <a class="nav-btn active" href="#">⚽ Đội Hình</a>
   <a class="nav-btn" href="https://duyrommm.github.io/lxfc/team_stats.html" id="nav-stats">📊 Thống Kê Đội</a>
@@ -627,21 +644,6 @@ body {
 
 </div>
 
-<!-- ── Club intro section ── -->
-<div class="club-section">
-  <div class="club-badge">⚽</div>
-  <div class="club-body">
-    <div class="club-name">LONGXUYEN FC</div>
-    <div class="club-founded">📅 Thành lập 23/10/2010</div>
-    <div class="club-desc">
-      Nòng cốt ban đầu là những người con <strong>Long Xuyên, An Giang</strong> đang học tập, làm việc tại TP.HCM. 
-      Màu áo truyền thống <strong>xanh lá & vàng</strong> tượng trưng cho cánh đồng và cây lúa miền Tây.<br>
-      Tiêu chí: rèn luyện sức khỏe với bóng đá, sau đó cùng ngồi lại gắn kết, hỗ trợ nhau trong công việc và cuộc sống. 
-      <strong>Thắng thua không phải điều quan trọng</strong> — một tập thể đoàn kết, vững mạnh mới là điều LXFC quan tâm.
-    </div>
-    <div class="club-slogan">"Mồ hôi · Sức khỏe · Ly bia lạnh · Tình bạn · Nụ cười"</div>
-  </div>
-</div>
 
 <div id="tooltip"></div>
 

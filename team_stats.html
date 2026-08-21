@@ -284,6 +284,45 @@ body {
   text-align: center; margin-top: 16px;
   color: rgba(255,255,255,0.2); font-size: 10px;
 }
+
+/* ── Lucky charm / winrate-sub ── */
+.winrate-sub { font-size: 9px; color: rgba(255,255,255,0.35); font-weight: 400; margin-left: 4px; }
+
+/* ── Absence redesign ── */
+.absence-item {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 9px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+}
+.absence-item:last-child { margin-bottom: 0; }
+.absence-header { display: flex; align-items: center; justify-content: space-between; }
+.absence-name   { font-size: 12px; font-weight: 700; color: #fff; }
+.absence-badge  {
+  font-size: 9px; font-weight: 700; padding: 2px 8px;
+  border-radius: 10px; white-space: nowrap;
+}
+.absence-badge.danger { background: rgba(244,67,54,0.18);  color: #ef9a9a; border: 1px solid rgba(244,67,54,0.3); }
+.absence-badge.warn   { background: rgba(255,152,0,0.18);  color: #ffcc80; border: 1px solid rgba(255,152,0,0.3); }
+.absence-badge.watch  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.1); }
+.absence-meta   { font-size: 10px; color: rgba(255,255,255,0.4); }
+.absence-bar-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.absence-bar-fill  { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+/* ── Stadium stats ── */
+.stadium-list { display: flex; flex-direction: column; gap: 7px; }
+.stadium-row  { display: flex; flex-direction: column; gap: 4px; }
+.stadium-header { display: flex; align-items: center; justify-content: space-between; }
+.stadium-name { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.stadium-wdl  { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.stadium-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; font-family: 'Oswald', sans-serif; }
+.stadium-badge.w { background: rgba(76,175,80,0.2); color: #4caf50; }
+.stadium-badge.d { background: rgba(255,152,0,0.2); color: #ff9800; }
+.stadium-badge.l { background: rgba(244,67,54,0.2); color: #f44336; }
+.stadium-goals { font-size: 10px; color: rgba(255,255,255,0.35); }
+.stadium-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.stadium-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(to right, #4caf50, #2e7d32); }
 </style>
 </head>
 <body>
@@ -293,8 +332,7 @@ body {
 </script>
 
 <nav class="nav">
-  <a class="nav-btn" href="index.html">🏠 Trang chủ</a>
-  <a class="nav-btn" href="dynamic.html">⚽ Đội Hình</a>
+  <a class="nav-btn" href="https://duyrommm.github.io/lxfc/dynamic.html">⚽ Đội Hình</a>
   <a class="nav-btn active" href="#">📊 Thống Kê Đội</a>
 </nav>
 
@@ -523,9 +561,157 @@ function renderDashboard(d) {
       </div>
     </div>
 
+
+    <!-- ── Lucky charm: Tỉ lệ thắng ── -->
+    <div class="card">
+      <div class="card-title">🍀 Linh vật — tỉ lệ thắng</div>
+      <div class="top-list" id="lucky-list"></div>
+    </div>
+
+    <!-- ── Sân thi đấu ── -->
+    <div class="card">
+      <div class="card-title">🏟️ Hiệu suất theo sân</div>
+      <div class="stadium-list" id="stadium-list"></div>
+    </div>
+
+    <!-- ── Tường thành: cleanRate ── -->
+    <div class="card">
+      <div class="card-title">🧤 Tường thành — giữ sạch lưới</div>
+      <div class="top-list" id="clean-list"></div>
+    </div>
+
+    <!-- ── Đóng góp bàn thắng ── -->
+    <div class="card">
+      <div class="card-title">⚡ Đóng góp bàn thắng</div>
+      <div class="top-list" id="contrib-list"></div>
+    </div>
+
+    <!-- ── Vắng mặt đáng lo ngại ── -->
+    <div class="card">
+      <div class="card-title">⚠️ Vắng mặt đáng lo ngại</div>
+      <div id="absence-wrap"></div>
+    </div>
+
   `;
 
+  // ── Render Lucky Charm ──
+  renderTopList('lucky-list', d.topWinRate || [], function(p, i) {
+    var maxRate = ((d.topWinRate||[])[0] || {}).winRate || 1;
+    var barClr  = i===0 ? '#FFD700' : i===1 ? 'rgba(255,255,255,0.55)' : 'rgba(205,127,50,0.85)';
+    var cols    = ['#FFD700','#bdbdbd','#cd7f32'];
+    var tieNote = i > 0 && p.winRate === d.topWinRate[i-1].winRate ? ' · TB' : '';
+    var el = document.createElement('div');
+    el.className = 'top-item';
+    el.innerHTML =
+      '<div class="top-rank ' + rankCls(i) + '">' + (i+1) + '</div>' +
+      '<div class="top-bar-wrap">' +
+        '<div class="top-name">' + p.name + '<span class="winrate-sub">(' + p.wins + 'W/' + p.tran + ' trận' + tieNote + ')</span></div>' +
+        '<div class="top-bar-track"><div class="top-bar-fill" style="width:' + Math.round(p.winRate/maxRate*100) + '%;background:' + barClr + '"></div></div>' +
+      '</div>' +
+      '<div class="top-val" style="color:' + (i<3?cols[i]:'rgba(255,255,255,0.6)') + '">' + p.winRate + '<span style="font-size:11px;font-weight:400">%</span></div>';
+    return el;
+  }, 'Chưa đủ dữ liệu (cần ≥5 trận)');
+
+  // ── Render Stadium Stats ──
+  (function() {
+    var wrap = document.getElementById('stadium-list');
+    if (!wrap) return;
+    var list = d.stadiumStats || [];
+    if (!list.length) {
+      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">Chưa có dữ liệu sân</div>';
+      return;
+    }
+    var maxMatches = list[0].total || 1;
+    list.forEach(function(s) {
+      var winPct = s.total > 0 ? Math.round(s.w / s.total * 100) : 0;
+      var barPct = Math.round(s.total / maxMatches * 100);
+      var row = document.createElement('div');
+      row.className = 'stadium-row';
+      row.innerHTML =
+        '<div class="stadium-header">' +
+          '<div class="stadium-name" title="' + s.name + '">' + s.name + '</div>' +
+          '<div class="stadium-wdl">' +
+            (s.w > 0 ? '<span class="stadium-badge w">' + s.w + 'W</span>' : '') +
+            (s.d > 0 ? '<span class="stadium-badge d">' + s.d + 'D</span>' : '') +
+            (s.l > 0 ? '<span class="stadium-badge l">' + s.l + 'L</span>' : '') +
+            '<span class="stadium-goals">' + s.gf + ':' + s.ga + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="stadium-bar"><div class="stadium-bar-fill" style="width:' + barPct + '%"></div></div>';
+      wrap.appendChild(row);
+    });
+  })();
+
+  // ── Render Clean Rate ──
+  renderTopList('clean-list', d.topCleanRate || [], function(p, i) {
+    var maxRate = ((d.topCleanRate||[])[0] || {}).cleanRate || 1;
+    var el = document.createElement('div');
+    el.className = 'top-item';
+    el.innerHTML =
+      '<div class="top-rank ' + rankCls(i) + '">' + (i+1) + '</div>' +
+      '<div class="top-bar-wrap">' +
+        '<div class="top-name">' + p.name + '<span class="winrate-sub">(' + p.tran + ' trận)</span></div>' +
+        '<div class="top-bar-track"><div class="top-bar-fill" style="width:' + Math.round(p.cleanRate/maxRate*100) + '%;background:#00acc1"></div></div>' +
+      '</div>' +
+      '<div class="top-val" style="color:#00acc1">' + p.cleanRate + '<span style="font-size:11px;font-weight:400">%</span></div>';
+    return el;
+  }, 'Chưa đủ dữ liệu');
+
+  // ── Render Contrib Rate ──
+  renderTopList('contrib-list', d.topContribRate || [], function(p, i) {
+    var maxRate = ((d.topContribRate||[])[0] || {}).contribRate || 1;
+    var el = document.createElement('div');
+    el.className = 'top-item';
+    el.innerHTML =
+      '<div class="top-rank ' + rankCls(i) + '">' + (i+1) + '</div>' +
+      '<div class="top-bar-wrap">' +
+        '<div class="top-name">' + p.name + '<span class="winrate-sub">(' + p.gf + ' bàn+kiến tạo)</span></div>' +
+        '<div class="top-bar-track"><div class="top-bar-fill" style="width:' + Math.round(p.contribRate/maxRate*100) + '%;background:#ab47bc"></div></div>' +
+      '</div>' +
+      '<div class="top-val" style="color:#ab47bc">' + p.contribRate + '<span style="font-size:11px;font-weight:400">%</span></div>';
+    return el;
+  }, 'Chưa đủ dữ liệu');
+
+  // ── Render Absence Warnings (redesign) ──
+  (function() {
+    var wrap = document.getElementById('absence-wrap');
+    if (!wrap) return;
+    var list = d.absenceWarnings || [];
+    if (!list.length) {
+      wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#4caf50;font-size:12px">✅ Tất cả đang duy trì chuyên cần tốt!</div>';
+      return;
+    }
+    var maxMissed = list[0].missedCount || 1;
+    list.forEach(function(p) {
+      var cls  = p.missedCount >= 4 ? 'danger' : p.missedCount >= 3 ? 'warn' : 'watch';
+      var lbl  = p.missedCount >= 4 ? '🔴 Báo động' : p.missedCount >= 3 ? '🟠 Cảnh báo' : '🟡 Theo dõi';
+      var barClr = p.missedCount >= 4 ? '#f44336' : p.missedCount >= 3 ? '#ff9800' : 'rgba(255,255,255,0.25)';
+      var barPct = Math.round(p.missedCount / maxMissed * 100);
+      var item = document.createElement('div');
+      item.className = 'absence-item';
+      item.innerHTML =
+        '<div class="absence-header">' +
+          '<div class="absence-name">' + p.name + '</div>' +
+          '<div class="absence-badge ' + cls + '">' + lbl + '</div>' +
+        '</div>' +
+        '<div class="absence-meta">Vắng <strong>' + p.missedCount + '</strong> trận liên tiếp · ' + p.missedDays + ' ngày kể từ trận cuối</div>' +
+        '<div class="absence-bar-track"><div class="absence-bar-fill" style="width:' + barPct + '%;background:' + barClr + '"></div></div>';
+      wrap.appendChild(item);
+    });
+  })();
+
   document.getElementById('updated').textContent = `Mùa giải 2026 · Cập nhật: ${d.updatedAt}`;
+}
+
+// ── Helper: render top list ──
+function renderTopList(elId, arr, buildFn, emptyMsg) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  if (!arr.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:11px">' + emptyMsg + '</div>';
+    return;
+  }
+  arr.forEach(function(p, i) { el.appendChild(buildFn(p, i)); });
 }
 
 // ── Fetch ──

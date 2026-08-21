@@ -353,7 +353,27 @@ function renderDashboard(d) {
 
 fetch(API_URL)
   .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(data => renderDashboard(data))
+  .then(data => {
+    // Nếu Apps Script Web App chưa được deploy lại bản mới (?page=home chưa được nhận diện),
+    // doGet cũ sẽ rơi vào nhánh else và trả về dữ liệu Đội Hình (không có teamName/foundedYear...).
+    if (!data || typeof data.teamName === 'undefined' || typeof data.foundedYear === 'undefined') {
+      document.getElementById('team-meta').textContent = 'Cần deploy lại Apps Script';
+      document.getElementById('content').innerHTML = `
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-size:28px;margin-bottom:8px">🔧</div>
+          <div style="font-weight:600;margin-bottom:8px">API đang trả dữ liệu cũ (chưa có route trang chủ)</div>
+          <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;text-align:left;max-width:420px;margin:0 auto">
+            Vào Apps Script ▸ <strong>Deploy</strong> ▸ <strong>Manage deployments</strong> ▸ bấm biểu tượng
+            bút chì (✏️) trên bản deploy đang dùng ▸ mục Version chọn <strong>New version</strong> ▸ bấm
+            <strong>Deploy</strong>.<br><br>
+            Lưu ý: chỉnh sửa trên bản deploy hiện có (đừng tạo deployment mới) để giữ nguyên đường link API mà
+            trang này đang gọi tới.
+          </div>
+        </div>`;
+      return;
+    }
+    renderDashboard(data);
+  })
   .catch(err => {
     document.getElementById('content').innerHTML = `
       <div class="card" style="text-align:center;padding:30px">

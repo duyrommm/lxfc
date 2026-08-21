@@ -126,6 +126,26 @@ body {
 .match-going .lbl { color: rgba(255,255,255,0.4); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 .no-match { text-align: center; padding: 20px 0; color: rgba(255,255,255,0.35); font-size: 12px; }
 
+.match-extra {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 11.5px; color: rgba(255,255,255,0.6); line-height: 1.6;
+}
+.live-badge { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.live-badge.on  { color: #f44336; font-weight: 600; }
+.live-badge.off { color: rgba(255,255,255,0.35); }
+.h2h-line { color: #FFD700; font-weight: 600; }
+.hauCan-box {
+  margin-top: 10px; text-align: left; background: rgba(255,255,255,0.03);
+  border-radius: 8px; padding: 10px 12px; font-size: 11.5px;
+  color: rgba(255,255,255,0.7); white-space: pre-line; line-height: 1.65;
+}
+.hauCan-box .title {
+  display: block; font-weight: 700; color: rgba(255,255,255,0.45);
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+}
+
 /* ── Attendance ── */
 .att-group { border-radius: 8px; margin-bottom: 6px; overflow: hidden; background: rgba(255,255,255,0.03); }
 .att-head {
@@ -340,6 +360,23 @@ function renderNextMatchCard(d) {
   const diCount = (att["Tham gia"] || []).length;
   const total = d.memberCount || 0;
 
+  const h2h = d.headToHead;
+  const h2hLine = h2h
+    ? `<div class="row-item h2h-line">🆚 Đối đầu: ${h2h.total} trận · ${h2h.w}T-${h2h.d}H-${h2h.l}B (${h2h.gf}-${h2h.ga} bàn)</div>`
+    : '';
+
+  const liveLine = m.liveStream
+    ? `<div class="row-item live-badge on">🔴 Livestream${m.donViLive ? ' · ' + m.donViLive : ''}</div>`
+    : `<div class="row-item live-badge off">📡 Không livestream</div>`;
+
+  const meetLine = (m.gioHopMat || m.diaDiemCafe)
+    ? `<div class="row-item">☕ Họp mặt${m.gioHopMat ? ' ' + m.gioHopMat : ''}${m.diaDiemCafe ? ' tại ' + m.diaDiemCafe : ''}</div>`
+    : '';
+
+  const hauCanBox = m.ghiChuHauCan
+    ? `<div class="hauCan-box"><span class="title">📋 Công tác hậu cần</span>${m.ghiChuHauCan}</div>`
+    : '';
+
   return `
     <div class="card next-match-card">
       <div class="card-title">🗓️ Trận sắp tới</div>
@@ -353,6 +390,12 @@ function renderNextMatchCard(d) {
       <div class="match-going">
         <div><div class="val">${diCount}/${total}</div><div class="lbl">Người đi</div></div>
       </div>
+      <div class="match-extra">
+        ${liveLine}
+        ${meetLine}
+        ${h2hLine}
+      </div>
+      ${hauCanBox}
     </div>`;
 }
 

@@ -153,6 +153,25 @@ body {
 }
 .lineup-link:hover { background: rgba(255,215,0,0.06); }
 
+/* ── Lineup card (đá chính / dự bị) ── */
+.lineup-note {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  margin-bottom: 10px; line-height: 1.5;
+}
+.lineup-list { display: flex; flex-direction: column; gap: 6px; }
+.lineup-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.03); border-radius: 8px;
+  padding: 8px 12px; font-size: 13px; font-weight: 600; color: #fff;
+}
+.lineup-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 3px 9px; border-radius: 10px; flex-shrink: 0;
+}
+.lineup-badge.starter { background: rgba(76,175,80,0.18); color: #4caf50; border: 1px solid rgba(76,175,80,0.4); }
+.lineup-badge.reserve { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); }
+.lineup-empty { text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; padding: 10px 0; }
+
 /* ── Activity feed ── */
 .feed-item {
   display: flex; align-items: flex-start; gap: 10px;
@@ -267,7 +286,7 @@ function renderNextMatchCard(d) {
         ${m.mauAo ? `<div class="row-item">👕 ${m.mauAo}</div>` : ''}
       </div>
       <div class="match-going">
-        <div><div class="val">${diCount}/${total}</div><div class="lbl">Người tham gia</div></div>
+        <div><div class="val">${diCount}/${total}</div><div class="lbl">Người đi</div></div>
       </div>
     </div>`;
 }
@@ -291,13 +310,37 @@ function renderAttendanceCard(d) {
       </div>`;
   }).join('');
 
-  const diCount = (att["Đi"] || []).length;
-
   return `
     <div class="card">
       <div class="card-title">✅ Điểm danh</div>
       ${groups}
-      <a class="lineup-link" href="dynamic.html">🛡️ Chốt đội hình · xếp từ ${diCount} người đã điểm danh Tham gia ›</a>
+    </div>`;
+}
+
+function renderLineupCard(d) {
+  if (!d.nextMatch) return '';
+  const going    = (d.attendance && d.attendance["Đi"]) || [];
+  const starters = d.startingLineup || [];
+  const size     = d.startingLineupSize || starters.length || 5;
+  const reserves = going.filter(n => starters.indexOf(n) === -1);
+
+  if (going.length === 0) {
+    return `
+      <div class="card">
+        <div class="card-title">🏁 Đội hình dự kiến</div>
+        <div class="lineup-empty">Chưa có ai điểm danh "Đi" cho trận này.</div>
+      </div>`;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-title">🏁 Đội hình dự kiến</div>
+      <div class="lineup-note">Ưu tiên ${size} người điểm danh "Đi" sớm nhất được đá chính, còn lại là dự bị.</div>
+      <div class="lineup-list">
+        ${starters.map(n => `<div class="lineup-row"><span>${n}</span><span class="lineup-badge starter">ĐÁ CHÍNH</span></div>`).join('')}
+        ${reserves.map(n => `<div class="lineup-row"><span>${n}</span><span class="lineup-badge reserve">DỰ BỊ</span></div>`).join('')}
+      </div>
+      <a class="lineup-link" href="dynamic.html">📊 Xem đội hình tiêu biểu theo điểm số ›</a>
     </div>`;
 }
 
@@ -347,7 +390,7 @@ function renderDashboard(d) {
   }
 
   document.getElementById('content').innerHTML =
-    renderNextMatchCard(d) + renderAttendanceCard(d) + renderFeedCard(d);
+    renderNextMatchCard(d) + renderAttendanceCard(d) + renderLineupCard(d) + renderFeedCard(d);
 
   document.getElementById('updated').textContent = `Cập nhật: ${d.updatedAt}`;
 }

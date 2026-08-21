@@ -109,13 +109,14 @@ body {
   font-size: 11px; font-weight: 700; padding: 3px 10px;
   border-radius: 12px; margin-bottom: 10px;
 }
+.next-match-card { text-align: center; }
 .match-vs { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; color: #fff; }
 .match-detail { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 6px; line-height: 1.7; }
-.match-detail .row-item { display: flex; align-items: center; gap: 6px; }
+.match-detail .row-item { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .match-going {
   margin-top: 12px; padding-top: 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: center;
 }
 .match-going .val { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: #4caf50; }
 .match-going .lbl { color: rgba(255,255,255,0.4); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -256,7 +257,7 @@ function renderNextMatchCard(d) {
   const total = d.memberCount || 0;
 
   return `
-    <div class="card">
+    <div class="card next-match-card">
       <div class="card-title">🗓️ Trận sắp tới</div>
       ${countdownText ? `<div class="countdown-badge">${countdownText}</div>` : ''}
       <div class="match-vs">vs ${m.doiThu || 'Chưa rõ đối thủ'}</div>

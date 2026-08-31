@@ -563,7 +563,7 @@ function renderScheduleCard(d) {
       <div class="sched-item">
         <div class="sched-date"><div class="d">${dd}</div><div class="m">Th${mm}</div></div>
         <div class="sched-info">
-          <div class="sched-title">vs ${s.doiThu}</div>
+          <div class="sched-title">${s.doiThu ? 'vs ' + s.doiThu : 'Chưa rõ đối thủ'}</div>
           <div class="sched-sub">${s.thu || ''}${s.gio ? ' · ' + s.gio : ''}${s.san ? ' · ' + s.san : ''}</div>
         </div>
         ${s.live ? `<div class="sched-live">🔴 LIVE</div>` : ''}

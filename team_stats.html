@@ -702,7 +702,8 @@ function renderDashboard(d) {
     });
   })();
 
-  document.getElementById('updated').textContent = `Mùa giải 2026 · Cập nhật: ${d.updatedAt}`;
+  document.getElementById('updated').textContent =
+    `Mùa giải 2026 · Cập nhật: ${d.updatedAt}${d.codeVersion ? ' · Bản ' + d.codeVersion : ''}`;
 }
 
 // ── Helper: render top list ──

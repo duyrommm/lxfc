@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LONGXUYEN FC - Lịch Thi Đấu</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a2a0a;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #fff;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.wrap { max-width: 640px; margin: 0 auto; }
+
+/* ── Nav ── */
+.nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.nav-btn {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent; color: rgba(255,255,255,0.5);
+  text-decoration: none; transition: all 0.15s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.nav-btn:hover { border-color: rgba(255,215,0,0.5); color: rgba(255,255,255,0.85); }
+.nav-btn.active {
+  background: rgba(255,215,0,0.15);
+  border-color: #FFD700; color: #FFD700;
+}
+
+/* ── Header ── */
+.header { text-align: center; margin-bottom: 16px; }
+.header h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 26px; font-weight: 700;
+  color: #FFD700; letter-spacing: 2px;
+}
+.header .meta {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 4px;
+}
+
+/* ── Card ── */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ── Loading ── */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 100px; color: rgba(255,255,255,0.3); font-size: 13px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #FFD700; border-radius: 50%;
+  animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Lịch thi đấu ── */
+.sched-list { display: flex; flex-direction: column; gap: 8px; }
+.sched-item {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px 12px;
+}
+.sched-item.off { opacity: 0.6; }
+.sched-item.today { border: 1px solid rgba(255,215,0,0.4); background: rgba(255,215,0,0.06); }
+.sched-date {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 48px; flex-shrink: 0; line-height: 1.2;
+}
+.sched-date .d { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700; color: #FFD700; }
+.sched-date .m { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+.sched-info { flex: 1; min-width: 0; }
+.sched-title { font-size: 14px; font-weight: 600; color: #fff; }
+.sched-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; line-height: 1.5; }
+.sched-note { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.sched-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.sched-live { font-size: 10px; font-weight: 700; color: #f44336; white-space: nowrap; }
+.sched-count {
+  display: inline-block; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 15px;
+  color: #FFD700; margin-left: 6px;
+}
+.empty-note { text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; padding: 20px 0; }
+
+/* ── Footer ── */
+.updated { text-align: center; margin-top: 6px; color: rgba(255,255,255,0.2); font-size: 10px; }
+
+@media (max-width: 600px) {
+  body { padding: 10px 8px; }
+  .header h1 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbzYwh_8bcxS-73I12Ou7HZelacLbX-rXBO87BhGQaiWnRY68STcfO1RSB6N7kEJrRfT/exec?page=schedule";
+</script>
+
+<div class="wrap">
+
+  <nav class="nav">
+    <a class="nav-btn" href="index.html">🏠 Trang chủ</a>
+    <a class="nav-btn" href="dynamic.html">⚽ Đội Hình</a>
+    <a class="nav-btn" href="team_stats.html">📊 Thống Kê Đội</a>
+    <a class="nav-btn active" href="#">🗓️ Lịch Thi Đấu</a>
+  </nav>
+
+  <div class="header">
+    <h1 id="team-name">🗓️ LỊCH THI ĐẤU</h1>
+    <div class="meta" id="team-meta">Đang tải...</div>
+  </div>
+
+  <div id="content">
+    <div class="card"><div class="loading"><div class="spinner"></div> Đang tải dữ liệu...</div></div>
+  </div>
+
+  <div class="updated" id="updated"></div>
+
+</div>
+
+<script>
+const WEEKDAY = ["Chủ nhật","Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7"];
+
+function renderScheduleList(d) {
+  const items = d.schedule || [];
+  if (!items.length) {
+    return `
+      <div class="card">
+        <div class="card-title">📋 Các trận / mốc sắp tới</div>
+        <div class="empty-note">Chưa có lịch thi đấu sắp tới nào được cập nhật trong sheet LICHTHIDAU.</div>
+      </div>`;
+  }
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const matchCount = items.filter(s => s.isMatch).length;
+
+  const rows = items.map(s => {
+    const dt = new Date(s.ngay + 'T00:00:00');
+    const dd = isNaN(dt.getTime()) ? '--' : String(dt.getDate()).padStart(2, '0');
+    const mm = isNaN(dt.getTime()) ? '--' : String(dt.getMonth() + 1).padStart(2, '0');
+    const isToday = s.ngay === todayStr;
+    const wd = s.thu || (isNaN(dt.getTime()) ? '' : WEEKDAY[dt.getDay()]);
+
+    if (!s.isMatch) {
+      return `
+        <div class="sched-item off ${isToday ? 'today' : ''}">
+          <div class="sched-date"><div class="d">${dd}</div><div class="m">Th${mm}</div></div>
+          <div class="sched-info">
+            <div class="sched-title">😴 Nghỉ${isToday ? ' · hôm nay' : ''}</div>
+            <div class="sched-sub">${wd}</div>
+            ${s.note ? `<div class="sched-note">${s.note}</div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="sched-item ${isToday ? 'today' : ''}">
+        <div class="sched-date"><div class="d">${dd}</div><div class="m">Th${mm}</div></div>
+        <div class="sched-info">
+          <div class="sched-title">vs ${s.doiThu}${isToday ? ' · hôm nay' : ''}</div>
+          <div class="sched-sub">📅 ${wd}${s.gio ? ' · ⏰ ' + s.gio : ''}${s.san ? ' · 📍 ' + s.san : ''}</div>
+          ${s.note ? `<div class="sched-note">📝 ${s.note}</div>` : ''}
+        </div>
+        <div class="sched-badges">
+          ${s.live ? `<div class="sched-live">🔴 LIVE</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="card-title">📋 Các trận / mốc sắp tới <span class="sched-count">${matchCount}</span></div>
+      <div class="sched-list">${rows}</div>
+    </div>`;
+}
+
+function renderPage(d) {
+  document.getElementById('team-meta').textContent = `${d.teamName || 'LONGXUYEN FC'} · Mùa giải ${new Date().getFullYear()}`;
+  document.getElementById('content').innerHTML = renderScheduleList(d);
+  document.getElementById('updated').textContent = `Cập nhật: ${d.updatedAt || ''}`;
+}
+
+fetch(API_URL)
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data => {
+    if (!data || typeof data.schedule === 'undefined') {
+      document.getElementById('team-meta').textContent = 'Cần deploy lại Apps Script';
+      document.getElementById('content').innerHTML = `
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-size:28px;margin-bottom:8px">🔧</div>
+          <div style="font-weight:600;margin-bottom:8px">API đang trả dữ liệu cũ (chưa có route lịch thi đấu)</div>
+          <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;text-align:left;max-width:420px;margin:0 auto">
+            Vào Apps Script ▸ <strong>Deploy</strong> ▸ <strong>Manage deployments</strong> ▸ bấm biểu tượng
+            bút chì (✏️) trên bản deploy đang dùng ▸ mục Version chọn <strong>New version</strong> ▸ bấm
+            <strong>Deploy</strong>.
+          </div>
+        </div>`;
+      return;
+    }
+    renderPage(data);
+  })
+  .catch(err => {
+    document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:30px">
+        <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+        <div>Không tải được dữ liệu</div>
+        <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px">${err.message}</div>
+      </div>`;
+    document.getElementById('team-meta').textContent = 'Lỗi kết nối';
+  });
+</script>
+</body>
+</html>

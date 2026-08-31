@@ -194,7 +194,7 @@ function renderScheduleList(d) {
       <div class="sched-item ${isToday ? 'today' : ''}">
         <div class="sched-date"><div class="d">${dd}</div><div class="m">Th${mm}</div></div>
         <div class="sched-info">
-          <div class="sched-title">vs ${s.doiThu}${isToday ? ' · hôm nay' : ''}</div>
+          <div class="sched-title">${s.doiThu ? 'vs ' + s.doiThu : 'Chưa rõ đối thủ'}${isToday ? ' · hôm nay' : ''}</div>
           <div class="sched-sub">📅 ${wd}${s.gio ? ' · ⏰ ' + s.gio : ''}${s.san ? ' · 📍 ' + s.san : ''}</div>
           ${s.note ? `<div class="sched-note">📝 ${s.note}</div>` : ''}
         </div>

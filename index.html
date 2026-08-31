@@ -630,7 +630,8 @@ function renderDashboard(d) {
   document.getElementById('content').innerHTML =
     renderNextMatchCard(d) + renderAttendanceCard(d) + renderLineupCard(d) + renderScheduleCard(d) + renderFeedCard(d);
 
-  document.getElementById('updated').textContent = `Cập nhật: ${d.updatedAt}`;
+  document.getElementById('updated').textContent =
+    `Cập nhật: ${d.updatedAt}${d.codeVersion ? ' · Bản ' + d.codeVersion : ''}`;
 }
 
 fetch(API_URL)

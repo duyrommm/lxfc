@@ -214,7 +214,8 @@ function renderScheduleList(d) {
 function renderPage(d) {
   document.getElementById('team-meta').textContent = `${d.teamName || 'LONGXUYEN FC'} · Mùa giải ${new Date().getFullYear()}`;
   document.getElementById('content').innerHTML = renderScheduleList(d);
-  document.getElementById('updated').textContent = `Cập nhật: ${d.updatedAt || ''}`;
+  document.getElementById('updated').textContent =
+    `Cập nhật: ${d.updatedAt || ''}${d.codeVersion ? ' · Bản ' + d.codeVersion : ''}`;
 }
 
 fetch(API_URL)

@@ -1017,7 +1017,8 @@ function renderField(data) {
 
   field.appendChild(Object.assign(document.createElement('div'), {className:'goal-bot'}));
 
-  document.getElementById('meta').textContent = `Sơ đồ ${data.formation} · Cập nhật: ${data.updatedAt}`;
+  document.getElementById('meta').textContent =
+    `Sơ đồ ${data.formation} · Cập nhật: ${data.updatedAt}${data.codeVersion ? ' · Bản ' + data.codeVersion : ''}`;
 }
 
 // ── Render bench ──

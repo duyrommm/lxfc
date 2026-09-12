@@ -306,6 +306,7 @@ body {
     <a class="nav-btn" href="team_stats.html">📊 Thống Kê Đội</a>
     <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
     <a class="nav-btn" href="finance.html">💰 Quỹ & Công Nợ</a>
+    <a class="nav-btn" href="match_report.html">📋 Báo Cáo Trận</a>
   </nav>
 
   <div class="header">
@@ -363,7 +364,7 @@ function renderNextMatchCard(d) {
     return `
       <div class="card">
         <div class="card-title">🗓️ Trận sắp tới</div>
-        <div class="no-match">Chưa có lịch trận sắp tới.<br>Vào Google Sheet ▸ menu ⚽ Quản lý đội bóng ▸ 📅 Nhập trận sắp tới để cập nhật.</div>
+        <div class="no-match">Chưa có lịch trận sắp tới, quay lại sau nhé! ⚽</div>
       </div>`;
   }
 
@@ -640,19 +641,15 @@ fetch(API_URL)
   .then(data => {
     // Nếu Apps Script Web App chưa được deploy lại bản mới (?page=home chưa được nhận diện),
     // doGet cũ sẽ rơi vào nhánh else và trả về dữ liệu Đội Hình (không có teamName/foundedYear...).
+    // Chi tiết kỹ thuật chỉ ghi ra console (F12) cho người phát triển — người dùng thường chỉ cần
+    // thấy 1 thông báo nhẹ nhàng, không cần biết "deploy" là gì.
     if (!data || typeof data.teamName === 'undefined' || typeof data.foundedYear === 'undefined') {
-      document.getElementById('team-meta').textContent = 'Cần deploy lại Apps Script';
+      console.warn('LXFC: API đang trả dữ liệu cũ (thiếu teamName/foundedYear) — có thể Web App chưa được Deploy bản Code.gs mới nhất.');
+      document.getElementById('team-meta').textContent = 'Đang cập nhật...';
       document.getElementById('content').innerHTML = `
-        <div class="card" style="text-align:center;padding:24px">
+        <div class="card" style="text-align:center;padding:30px">
           <div style="font-size:28px;margin-bottom:8px">🔧</div>
-          <div style="font-weight:600;margin-bottom:8px">API đang trả dữ liệu cũ (chưa có route trang chủ)</div>
-          <div style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.7;text-align:left;max-width:420px;margin:0 auto">
-            Vào Apps Script ▸ <strong>Deploy</strong> ▸ <strong>Manage deployments</strong> ▸ bấm biểu tượng
-            bút chì (✏️) trên bản deploy đang dùng ▸ mục Version chọn <strong>New version</strong> ▸ bấm
-            <strong>Deploy</strong>.<br><br>
-            Lưu ý: chỉnh sửa trên bản deploy hiện có (đừng tạo deployment mới) để giữ nguyên đường link API mà
-            trang này đang gọi tới.
-          </div>
+          <div>Dữ liệu đang được cập nhật, vui lòng quay lại sau ít phút nhé.</div>
         </div>`;
       return;
     }

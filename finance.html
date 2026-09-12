@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LXFC Quỹ & Công Nợ</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a2a0a;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #fff;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.header h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px; font-weight: 700;
+  color: #FFD700; letter-spacing: 3px;
+}
+.header .season {
+  color: rgba(255,255,255,0.45);
+  font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 4px;
+}
+
+/* ── Grid layout ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.grid-2 { grid-column: span 2; }
+.grid-3 { grid-column: span 3; }
+
+/* ── Nav ── */
+.nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.nav-btn {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent; color: rgba(255,255,255,0.5);
+  text-decoration: none; transition: all 0.15s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.nav-btn:hover { border-color: rgba(255,215,0,0.5); color: rgba(255,255,255,0.85); }
+.nav-btn.active {
+  background: rgba(255,215,0,0.15);
+  border-color: #FFD700; color: #FFD700;
+}
+
+/* ── Card ── */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.card-hint {
+  font-size: 10px; color: rgba(255,255,255,0.3);
+  margin-top: -8px; margin-bottom: 12px;
+}
+
+/* ── Loading ── */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 100px; color: rgba(255,255,255,0.3); font-size: 13px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #FFD700; border-radius: 50%;
+  animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Finance ── */
+.finance-big {
+  text-align: center; padding: 4px 0 12px;
+}
+.finance-big .val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 40px; font-weight: 700; color: #4caf50;
+}
+.finance-big .label {
+  color: rgba(255,255,255,0.4); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
+}
+.finance-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px;
+}
+.finance-row .flabel { color: rgba(255,255,255,0.5); }
+.finance-row .fval   { font-weight: 700; }
+.finance-row .fval.thu { color: #4caf50; }
+.finance-row .fval.chi { color: #f44336; }
+
+/* ── Đối chiếu quỹ theo từng trận ── */
+.ledger-list { display: flex; flex-direction: column; gap: 7px; max-height: 480px; overflow-y: auto; }
+.ledger-row {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 9px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.ledger-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ledger-opp  { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.ledger-date { font-size: 9px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
+.ledger-nums { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.55); gap: 8px; }
+.ledger-nums strong { color: rgba(255,255,255,0.85); font-weight: 700; }
+.ledger-delta { font-weight: 700; }
+.ledger-delta.pos { color: #4caf50; }
+.ledger-delta.neg { color: #f44336; }
+.ledger-delta.zero { color: rgba(255,255,255,0.4); }
+
+/* ── Tra công nợ cá nhân ── */
+.debt-search-row { display: flex; gap: 8px; }
+.debt-search-input {
+  flex: 1; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+  color: #fff; font-size: 14px; font-family: 'Be Vietnam Pro', sans-serif;
+}
+.debt-search-input::placeholder { color: rgba(255,255,255,0.35); }
+.debt-search-input:focus { outline: none; border-color: #FFD700; }
+.debt-search-btn {
+  padding: 10px 18px; border-radius: 8px; border: none;
+  background: #FFD700; color: #0a2a0a; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.debt-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.debt-result-summary {
+  margin-top: 14px; padding: 14px; border-radius: 8px;
+  background: rgba(255,255,255,0.04); text-align: center;
+}
+.debt-result-summary .name { font-size: 14px; font-weight: 700; color: #FFD700; }
+.debt-result-summary .amt  { font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700; margin-top: 4px; }
+.debt-result-summary .amt.zero { color: #4caf50; }
+.debt-result-summary .amt.owe  { color: #f44336; }
+.debt-timeline { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.debt-tl-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 8px 9px; border-radius: 6px; background: rgba(255,255,255,0.03); font-size: 11px;
+}
+.debt-tl-row.opening { background: rgba(255,255,255,0.06); font-style: italic; }
+.debt-tl-left { color: rgba(255,255,255,0.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.debt-tl-left .dt { color: rgba(255,255,255,0.3); margin-right: 6px; }
+.debt-tl-amt { font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.debt-tl-amt.plus  { color: #f44336; }
+.debt-tl-amt.minus { color: #4caf50; }
+.debt-search-msg { margin-top: 10px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.4); }
+
+/* Updated at */
+.updated {
+  text-align: center; margin-top: 16px;
+  color: rgba(255,255,255,0.2); font-size: 10px;
+}
+
+/* ════════════════════════════════
+   RESPONSIVE MOBILE
+   ════════════════════════════════ */
+@media (max-width: 600px) {
+  body { padding: 10px 8px; }
+  .header h1 { font-size: 22px; }
+  .grid { grid-template-columns: 1fr !important; gap: 10px; }
+  .grid-2, .grid-3 { grid-column: span 1 !important; }
+  .finance-big .val { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbzYwh_8bcxS-73I12Ou7HZelacLbX-rXBO87BhGQaiWnRY68STcfO1RSB6N7kEJrRfT/exec";
+  const API_URL  = API_BASE + "?page=stats";
+</script>
+
+<nav class="nav">
+  <a class="nav-btn" href="index.html">🏠 Trang chủ</a>
+  <a class="nav-btn" href="dynamic.html">⚽ Đội Hình</a>
+  <a class="nav-btn" href="team_stats.html">📊 Thống Kê Đội</a>
+  <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
+  <a class="nav-btn active" href="#">💰 Quỹ & Công Nợ</a>
+</nav>
+
+<div class="header">
+  <h1>💰 LXFC QUỸ & CÔNG NỢ</h1>
+  <div class="season" id="updated">Đang tải...</div>
+</div>
+
+<!-- ── Tra công nợ cá nhân — không cần PIN, chỉ trả về đúng 1 người theo tên tự gõ ── -->
+<div class="grid" style="margin-bottom:14px">
+  <div class="card grid-3">
+    <div class="card-title">🔍 Tra công nợ cá nhân</div>
+    <div class="debt-search-row">
+      <input type="text" id="debtSearchInput" class="debt-search-input" placeholder="Gõ tên của bạn (VD: Duy Bono)...">
+      <button class="debt-search-btn" onclick="searchDebt()">Tra cứu</button>
+    </div>
+    <div id="debtSearchResult"></div>
+  </div>
+</div>
+
+<div class="grid" id="dashboard">
+  <div class="card" style="grid-column:span 3">
+    <div class="loading"><div class="spinner"></div> Đang tải dữ liệu quỹ...</div>
+  </div>
+</div>
+
+<script>
+function fmt(n) {
+  return Number(n).toLocaleString('vi-VN');
+}
+
+function renderDashboard(d) {
+  const fund = d.fundBalance || { thu: 0, chi: 0, balance: 0 };
+  const ledger = d.matchFinanceLedger || [];
+
+  document.getElementById('dashboard').innerHTML = `
+
+    <!-- ── Quỹ đội ── -->
+    <div class="card">
+      <div class="card-title">💰 Quỹ đội</div>
+      <div class="finance-big">
+        <div class="val" style="color:${fund.balance < 0 ? '#f44336' : '#4caf50'}">${fmt(fund.balance)}đ</div>
+        <div class="label">Số dư hiện tại</div>
+      </div>
+      <div class="finance-row">
+        <span class="flabel">Tổng thu</span>
+        <span class="fval thu">${fmt(fund.thu)}đ</span>
+      </div>
+      <div class="finance-row">
+        <span class="flabel">Tổng chi</span>
+        <span class="fval chi">${fmt(fund.chi)}đ</span>
+      </div>
+    </div>
+
+    <!-- ── Đối chiếu quỹ theo từng trận ── -->
+    <div class="card grid-2">
+      <div class="card-title">🧾 Đối chiếu quỹ theo từng trận</div>
+      <div class="card-hint">Phí sân đã nhập lúc lưu trận · Đã thu tiền mặt tại sân · Còn nợ lại · Chênh lệch (dư quỹ / đội phải bù)</div>
+      <div class="ledger-list" id="ledger-list"></div>
+    </div>
+
+  `;
+
+  // ── Render đối chiếu quỹ theo từng trận ──
+  (function() {
+    var wrap = document.getElementById('ledger-list');
+    if (!wrap) return;
+    if (!ledger.length) {
+      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">Chưa có dữ liệu đối chiếu (chỉ tính từ các trận lưu sau khi có tính năng này).</div>';
+      return;
+    }
+    ledger.forEach(function(m) {
+      var delta = m.chenhLech || 0;
+      var deltaCls   = delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero';
+      var deltaLabel = delta > 0 ? ('+' + fmt(delta) + 'đ dư') : delta < 0 ? (fmt(Math.abs(delta)) + 'đ đội bù') : 'Khớp';
+      var row = document.createElement('div');
+      row.className = 'ledger-row';
+      row.innerHTML =
+        '<div class="ledger-header">' +
+          '<div class="ledger-opp" title="' + (m.opponent || '') + '">🆚 ' + (m.opponent || 'Trận đấu') + '</div>' +
+          '<div class="ledger-date">' + (m.date || '') + '</div>' +
+        '</div>' +
+        '<div class="ledger-nums">' +
+          '<span>Phí sân: <strong>' + fmt(m.totalFee) + 'đ</strong></span>' +
+          '<span>Đã thu: <strong>' + fmt(m.tongThu) + 'đ</strong></span>' +
+        '</div>' +
+        '<div class="ledger-nums">' +
+          '<span>Còn nợ: <strong>' + fmt(m.tongConNo) + 'đ</strong></span>' +
+          '<span class="ledger-delta ' + deltaCls + '">' + deltaLabel + '</span>' +
+        '</div>';
+      wrap.appendChild(row);
+    });
+  })();
+
+  document.getElementById('updated').textContent =
+    `Cập nhật: ${d.updatedAt}${d.codeVersion ? ' · Bản ' + d.codeVersion : ''}`;
+}
+
+// ── Tra công nợ cá nhân ──
+// Không cần PIN — server (?page=debt&name=...) chỉ trả về đúng 1 người theo tên tự gõ, không
+// liệt kê được công nợ của cả đội, nên an toàn để mở công khai trên trang này.
+let debtSearchInFlight = false;
+function searchDebt() {
+  if (debtSearchInFlight) return;
+  const input = document.getElementById('debtSearchInput');
+  const name  = (input.value || '').trim();
+  const resultEl = document.getElementById('debtSearchResult');
+  if (!name) {
+    resultEl.innerHTML = '<div class="debt-search-msg">Vui lòng gõ tên cần tra.</div>';
+    return;
+  }
+  debtSearchInFlight = true;
+  const btn = document.querySelector('.debt-search-btn');
+  btn.disabled = true;
+  resultEl.innerHTML = '<div class="debt-search-msg"><div class="spinner" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:6px"></div>Đang tra cứu...</div>';
+
+  fetch(API_BASE + '?page=debt&name=' + encodeURIComponent(name))
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      debtSearchInFlight = false;
+      btn.disabled = false;
+      renderDebtSearchResult(data);
+    })
+    .catch(err => {
+      debtSearchInFlight = false;
+      btn.disabled = false;
+      resultEl.innerHTML = '<div class="debt-search-msg">⚠️ Không tra được: ' + err.message + '</div>';
+    });
+}
+document.getElementById('debtSearchInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') searchDebt();
+});
+
+function renderDebtSearchResult(data) {
+  const resultEl = document.getElementById('debtSearchResult');
+  if (!data || !data.found) {
+    resultEl.innerHTML = '<div class="debt-search-msg">Không tìm thấy "' + (data && data.name ? data.name : '') + '" trong danh sách đội — kiểm tra lại chính tả tên.</div>';
+    return;
+  }
+  const debt = data.currentDebt || 0;
+  const timeline = data.timeline || [];
+  let html = '<div class="debt-result-summary">' +
+    '<div class="name">' + data.name + '</div>' +
+    '<div class="amt ' + (debt > 0 ? 'owe' : 'zero') + '">' + fmt(debt) + 'đ</div>' +
+    '</div>';
+  if (timeline.length === 0) {
+    html += '<div class="debt-search-msg">Không có sao kê chi tiết (nợ có thể phát sinh trước khi hệ thống ghi chi tiết).</div>';
+  } else {
+    html += '<div class="debt-timeline">' + timeline.map(t => {
+      const isPlus = t.amount > 0;
+      const cls = t.type === 'opening' ? 'opening' : '';
+      const sign = isPlus ? '+' : '−';
+      return '<div class="debt-tl-row ' + cls + '">' +
+        '<span class="debt-tl-left">' + (t.date ? '<span class="dt">' + t.date + '</span>' : '') + (t.label || '') + '</span>' +
+        '<span class="debt-tl-amt ' + (isPlus ? 'plus' : 'minus') + '">' + sign + fmt(Math.abs(t.amount)) + 'đ</span>' +
+        '</div>';
+    }).join('') + '</div>';
+  }
+  resultEl.innerHTML = html;
+}
+
+// ── Fetch ──
+fetch(API_URL)
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data => {
+    if (!data) throw new Error('Dữ liệu không hợp lệ — kiểm tra lại doGet routing (?page=stats)');
+    renderDashboard(data);
+  })
+  .catch(err => {
+    document.getElementById('dashboard').innerHTML = `
+      <div class="card" style="grid-column:span 3;text-align:center;padding:40px">
+        <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+        <div>Không tải được dữ liệu quỹ</div>
+        <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px">${err.message}</div>
+      </div>`;
+  });
+</script>
+</body>
+</html>

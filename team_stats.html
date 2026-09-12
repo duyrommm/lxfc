@@ -314,6 +314,7 @@ body {
   <a class="nav-btn active" href="#">📊 Thống Kê Đội</a>
   <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
   <a class="nav-btn" href="finance.html">💰 Quỹ & Công Nợ</a>
+  <a class="nav-btn" href="match_report.html">📋 Báo Cáo Trận</a>
 </nav>
 
 <div class="header">
@@ -700,7 +701,7 @@ fetch(API_URL)
   .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(data => {
     if (!data || !data.matches) {
-      throw new Error('Dữ liệu không hợp lệ — kiểm tra lại doGet routing (?page=stats)');
+      throw new Error('Dữ liệu không hợp lệ.');
     }
     renderDashboard(data);
   })

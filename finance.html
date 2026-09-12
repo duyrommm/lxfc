@@ -212,6 +212,7 @@ body {
   <a class="nav-btn" href="team_stats.html">📊 Thống Kê Đội</a>
   <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
   <a class="nav-btn active" href="#">💰 Quỹ & Công Nợ</a>
+  <a class="nav-btn" href="match_report.html">📋 Báo Cáo Trận</a>
 </nav>
 
 <div class="header">
@@ -246,21 +247,22 @@ function renderDashboard(d) {
   const fund = d.fundBalance || { thu: 0, chi: 0, balance: 0 };
   const ledger = d.matchFinanceLedger || [];
   // fundBalance/matchFinanceLedger là field MỚI trong getTeamStats() — nếu Web App vẫn đang chạy
-  // code CŨ (chưa Deploy ▸ New version), field này sẽ hoàn toàn không có (khác với có nhưng =0),
-  // nên phải cảnh báo rõ thay vì lặng lẽ hiện 0đ khiến tưởng nhầm là quỹ trống.
+  // code CŨ (chưa Deploy ▸ New version), field này sẽ hoàn toàn không có (khác với có nhưng =0).
+  // Không hiện 0đ giả kèm hướng dẫn kỹ thuật cho người dùng thường — chỉ cảnh báo ngắn gọn trên
+  // trang, còn chi tiết để tự khắc phục thì ghi ra console (F12) cho người phát triển.
   const isStale = (typeof d.fundBalance === 'undefined');
+  if (isStale) {
+    console.warn('LXFC: thiếu field fundBalance/matchFinanceLedger — có thể Web App chưa được Deploy bản Code.gs mới nhất.');
+    document.getElementById('updated').textContent = 'Đang cập nhật...';
+    document.getElementById('dashboard').innerHTML = `
+      <div class="card grid-3" style="text-align:center;padding:30px">
+        <div style="font-size:28px;margin-bottom:8px">🔧</div>
+        <div>Dữ liệu quỹ đang được cập nhật, vui lòng quay lại sau ít phút nhé.</div>
+      </div>`;
+    return;
+  }
 
   document.getElementById('dashboard').innerHTML = `
-
-    ${isStale ? `
-    <div class="card grid-3" style="border-color:#ff9800;background:rgba(255,152,0,0.08)">
-      <div class="card-title" style="color:#ffb74d">⚠️ Web App đang chạy code cũ</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.7">
-        Trang này cần bản Code.gs mới nhất nhưng Web App vẫn đang trả dữ liệu cũ (chưa có Quỹ đội/đối chiếu từng trận/tra công nợ) —
-        số 0đ bên dưới KHÔNG phải là quỹ thật. Vào Apps Script ▸ nút <b>Deploy</b> (góc phải) ▸ <b>Manage deployments</b> ▸
-        bấm ✏️ ở bản deploy Web App ▸ chọn <b>New version</b> ▸ <b>Deploy</b>, rồi tải lại trang này.
-      </div>
-    </div>` : ''}
 
     <!-- ── Quỹ đội ── -->
     <div class="card">
@@ -365,7 +367,8 @@ function renderDebtSearchResult(data) {
   // rõ ràng) lẫn `timeline`. Phải phân biệt rạch ròi với "tra không ra tên" kẻo tưởng nhầm là gõ sai.
   const isStale = !data || (typeof data.found === 'undefined' && typeof data.timeline === 'undefined');
   if (isStale) {
-    resultEl.innerHTML = '<div class="debt-search-msg" style="color:#ffb74d">⚠️ Web App đang chạy code cũ, chưa có tính năng tra công nợ này. Vào Apps Script ▸ Deploy ▸ Manage deployments ▸ ✏️ ▸ New version ▸ Deploy, rồi thử lại.</div>';
+    console.warn('LXFC: thiếu field found/timeline ở ?page=debt — có thể Web App chưa được Deploy bản Code.gs mới nhất.');
+    resultEl.innerHTML = '<div class="debt-search-msg" style="color:#ffb74d">⚠️ Chưa tra được lúc này, vui lòng thử lại sau ít phút.</div>';
     return;
   }
   if (!data.found) {
@@ -398,7 +401,7 @@ function renderDebtSearchResult(data) {
 fetch(API_URL)
   .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(data => {
-    if (!data) throw new Error('Dữ liệu không hợp lệ — kiểm tra lại doGet routing (?page=stats)');
+    if (!data) throw new Error('Dữ liệu không hợp lệ.');
     renderDashboard(data);
   })
   .catch(err => {

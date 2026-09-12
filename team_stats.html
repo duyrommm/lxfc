@@ -211,29 +211,6 @@ body {
 .h2h-badge.l { background: rgba(244,67,54,0.2); color: #f44336; }
 .h2h-stat { font-size: 10px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
 
-/* ── Finance ── */
-.finance-big {
-  text-align: center; padding: 4px 0 12px;
-}
-.finance-big .val {
-  font-family: 'Oswald', sans-serif;
-  font-size: 32px; font-weight: 700; color: #4caf50;
-}
-.finance-big .label {
-  color: rgba(255,255,255,0.4); font-size: 10px;
-  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
-}
-.finance-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  font-size: 12px;
-}
-.finance-row .flabel { color: rgba(255,255,255,0.5); }
-.finance-row .fval   { font-weight: 700; }
-.finance-row .fval.thu { color: #4caf50; }
-.finance-row .fval.chi { color: #f44336; }
-
 /* ── Discipline ── */
 .disc-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -336,6 +313,7 @@ body {
   <a class="nav-btn" href="dynamic.html">⚽ Đội Hình</a>
   <a class="nav-btn active" href="#">📊 Thống Kê Đội</a>
   <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
+  <a class="nav-btn" href="finance.html">💰 Quỹ & Công Nợ</a>
 </nav>
 
 <div class="header">
@@ -417,7 +395,7 @@ function renderDashboard(d) {
         </div>
       </div>
       <div class="goals-avg">
-        TB ${(m.gf/total).toFixed(1)} bàn thắng · ${(m.ga/total).toFixed(1)} bàn thua / trận
+        TB ${total>0?(m.gf/total).toFixed(1):'0.0'} bàn thắng · ${total>0?(m.ga/total).toFixed(1):'0.0'} bàn thua / trận
       </div>
     </div>
 

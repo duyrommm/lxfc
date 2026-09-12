@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LXFC Báo Cáo Trận Đấu</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a2a0a;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #fff;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* ── Nav (giống các trang khác) ── */
+.nav {
+  display: flex; flex-direction: row; justify-content: center; align-items: center;
+  gap: 8px; margin-bottom: 20px; width: 100%; flex-wrap: wrap;
+}
+.nav-btn {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  background: transparent; color: rgba(255,255,255,0.5);
+  text-decoration: none; transition: all 0.15s;
+  letter-spacing: 0.3px; white-space: nowrap; display: inline-block;
+}
+.nav-btn:hover { border-color: rgba(255,215,0,0.5); color: rgba(255,255,255,0.85); }
+.nav-btn.active { background: rgba(255,215,0,0.15); border-color: #FFD700; color: #FFD700; }
+
+.page-title {
+  text-align: center; margin-bottom: 16px;
+}
+.page-title h1 {
+  font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 700;
+  color: #FFD700; letter-spacing: 2px;
+}
+
+/* ── Thanh điều khiển: chọn trận + nút lưu ảnh ── */
+.controls {
+  max-width: 520px; margin: 0 auto 16px; display: flex; gap: 8px; flex-wrap: wrap;
+}
+.match-select {
+  flex: 1; min-width: 180px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+  color: #fff; font-size: 13px; font-family: 'Be Vietnam Pro', sans-serif;
+}
+.match-select:focus { outline: none; border-color: #FFD700; }
+.btn-save-img {
+  padding: 10px 18px; border-radius: 8px; border: none;
+  background: #FFD700; color: #0a2a0a; font-weight: 700; font-size: 13px; cursor: pointer;
+  white-space: nowrap;
+}
+.btn-save-img:disabled { opacity: 0.5; cursor: not-allowed; }
+.save-hint {
+  max-width: 520px; margin: -8px auto 16px; text-align: center;
+  font-size: 10.5px; color: rgba(255,255,255,0.35);
+}
+
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 200px; color: rgba(255,255,255,0.3); font-size: 13px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #FFD700; border-radius: 50%;
+  animation: spin 0.8s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
+   REPORT CARD — phần này được chụp thành ảnh
+   ══════════════════════════════════════════ */
+#reportCardWrap { max-width: 520px; margin: 0 auto; }
+#reportCard {
+  background: linear-gradient(180deg, #0f3a12 0%, #0a2a0a 55%);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 18px;
+  padding: 22px 20px 18px;
+  position: relative;
+  overflow: hidden;
+}
+#reportCard::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% -10%, rgba(255,215,0,0.12), transparent 55%);
+  pointer-events: none;
+}
+
+.rc-brand {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600;
+  color: rgba(255,215,0,0.75); letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* Scoreboard */
+.rc-scoreboard {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 6px 0 14px;
+}
+.rc-team { flex: 1; text-align: center; min-width: 0; }
+.rc-team-name {
+  font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rc-team.us .rc-team-name { color: #FFD700; }
+.rc-team.them .rc-team-name { color: #fff; }
+.rc-score {
+  font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 44px; line-height: 1;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.rc-score .sep { color: rgba(255,255,255,0.25); font-size: 28px; }
+.rc-result-tag {
+  display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700;
+  padding: 2px 10px; border-radius: 10px; letter-spacing: 1px;
+}
+.rc-result-tag.W { background: rgba(76,175,80,0.2); color: #66bb6a; }
+.rc-result-tag.D { background: rgba(255,152,0,0.2); color: #ffa726; }
+.rc-result-tag.L { background: rgba(244,67,54,0.2); color: #ef5350; }
+
+.rc-meta {
+  text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.5);
+  padding-bottom: 14px; border-bottom: 1px dashed rgba(255,255,255,0.15);
+  margin-bottom: 14px;
+}
+.rc-meta b { color: rgba(255,255,255,0.75); font-weight: 600; }
+
+/* MVP */
+.rc-mvp {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
+}
+.rc-mvp .crown { font-size: 18px; }
+.rc-mvp .lbl { font-size: 9.5px; color: rgba(255,215,0,0.7); text-transform: uppercase; letter-spacing: 1px; }
+.rc-mvp .nm { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 700; color: #FFD700; }
+
+/* Section */
+.rc-section { margin-bottom: 14px; }
+.rc-section-title {
+  font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.45); letter-spacing: 1.3px; text-transform: uppercase;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.rc-chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px;
+}
+.rc-chip .cnt { font-family: 'Oswald', sans-serif; font-weight: 700; color: #4caf50; }
+.rc-chip.assist .cnt { color: #2196f3; }
+.rc-chip .tag-note { font-size: 9px; color: rgba(255,255,255,0.35); margin-left: 2px; }
+.rc-chip .yc { color: #FFD700; font-weight: 700; }
+.rc-chip .rc-red { color: #f44336; font-weight: 700; }
+
+.rc-empty { font-size: 11.5px; color: rgba(255,255,255,0.3); font-style: italic; }
+
+/* Quỹ trận đấu */
+.rc-fin-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.rc-fin-box {
+  background: rgba(255,255,255,0.04); border-radius: 8px; padding: 9px 10px;
+}
+.rc-fin-box .flabel { font-size: 9.5px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; }
+.rc-fin-box .fval { font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 700; margin-top: 2px; }
+.rc-fin-box .fval.thu { color: #4caf50; }
+.rc-fin-box .fval.no  { color: #ff9800; }
+.rc-fin-box .fval.fee { color: #fff; }
+.rc-fin-box .fval.delta.pos { color: #4caf50; }
+.rc-fin-box .fval.delta.neg { color: #f44336; }
+.rc-fin-box .fval.delta.zero { color: rgba(255,255,255,0.6); }
+
+/* Danh sách nợ */
+.rc-debt-list { display: flex; flex-direction: column; gap: 6px; }
+.rc-debt-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: rgba(244,67,54,0.07); border: 1px solid rgba(244,67,54,0.18);
+  border-radius: 8px; padding: 7px 10px;
+}
+.rc-debt-name { font-size: 12px; font-weight: 600; }
+.rc-debt-reason { font-size: 9.5px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+.rc-debt-amt { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 13px; color: #ef5350; white-space: nowrap; }
+
+.rc-footer {
+  text-align: center; margin-top: 4px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 9.5px; color: rgba(255,255,255,0.3);
+}
+
+.error-box {
+  max-width: 520px; margin: 0 auto; text-align: center; padding: 40px 20px;
+  background: rgba(255,255,255,0.04); border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+  body { padding: 10px 8px; }
+  .rc-score { font-size: 36px; }
+  .rc-fin-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<script>
+  const API_BASE = "https://script.google.com/macros/s/AKfycbzYwh_8bcxS-73I12Ou7HZelacLbX-rXBO87BhGQaiWnRY68STcfO1RSB6N7kEJrRfT/exec";
+</script>
+
+<nav class="nav">
+  <a class="nav-btn" href="index.html">🏠 Trang chủ</a>
+  <a class="nav-btn" href="dynamic.html">⚽ Đội Hình</a>
+  <a class="nav-btn" href="team_stats.html">📊 Thống Kê Đội</a>
+  <a class="nav-btn" href="schedule.html">🗓️ Lịch Thi Đấu</a>
+  <a class="nav-btn" href="finance.html">💰 Quỹ & Công Nợ</a>
+  <a class="nav-btn active" href="#">📋 Báo Cáo Trận</a>
+</nav>
+
+<div class="page-title">
+  <h1>📋 BÁO CÁO TRẬN ĐẤU</h1>
+</div>
+
+<div class="controls">
+  <select class="match-select" id="matchSelect" disabled>
+    <option>Đang tải danh sách trận...</option>
+  </select>
+  <button class="btn-save-img" id="btnSaveImg" onclick="saveAsImage()" disabled>📸 Lưu ảnh</button>
+</div>
+<div class="save-hint">Ảnh sẽ chỉ chụp phần khung bên dưới — vừa đẹp để gửi nhóm.</div>
+
+<div id="reportCardWrap">
+  <div class="loading"><div class="spinner"></div> Đang tải báo cáo trận đấu...</div>
+</div>
+
+<script>
+function fmt(n) {
+  return Number(n || 0).toLocaleString('vi-VN');
+}
+
+let currentReport = null;
+
+function loadReport(matchId) {
+  document.getElementById('reportCardWrap').innerHTML =
+    '<div class="loading"><div class="spinner"></div> Đang tải báo cáo trận đấu...</div>';
+  document.getElementById('btnSaveImg').disabled = true;
+
+  const url = API_BASE + '?page=matchreport' + (matchId ? '&matchId=' + encodeURIComponent(matchId) : '');
+  fetch(url)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      // Route ?page=matchreport là MỚI — nếu Web App chưa deploy bản mới, request này sẽ không có
+      // field `found` (true/false rõ ràng), khác hẳn "không có trận nào" (found:false + không lỗi).
+      // Chi tiết kỹ thuật chỉ ghi ra console (F12) cho người phát triển, trang chỉ hiện thông báo nhẹ.
+      if (!data || typeof data.found === 'undefined') {
+        console.warn('LXFC: thiếu field found ở ?page=matchreport — có thể Web App chưa được Deploy bản Code.gs mới nhất.');
+        showError('Dữ liệu đang được cập nhật, vui lòng quay lại sau ít phút nhé.');
+        populateMatchSelect((data && data.recentMatches) || []);
+        return;
+      }
+      populateMatchSelect(data.recentMatches || [], data.found ? data.matchId : '');
+      if (!data.found) {
+        showError('Chưa có trận đấu nào được ghi nhận.');
+        return;
+      }
+      currentReport = data;
+      renderReport(data);
+      document.getElementById('btnSaveImg').disabled = false;
+    })
+    .catch(err => {
+      showError('Không tải được dữ liệu: ' + err.message);
+    });
+}
+
+function showError(msg) {
+  document.getElementById('reportCardWrap').innerHTML =
+    '<div class="error-box"><div style="font-size:32px;margin-bottom:8px">⚠️</div>' +
+    '<div>' + msg + '</div></div>';
+}
+
+function populateMatchSelect(list, selectedId) {
+  const sel = document.getElementById('matchSelect');
+  if (!list.length) {
+    sel.innerHTML = '<option>Chưa có trận nào</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.innerHTML = list.map(m =>
+    '<option value="' + m.matchId + '"' + (m.matchId === selectedId ? ' selected' : '') + '>' +
+    m.date + ' · vs ' + m.opponent + ' (' + m.score + ')' +
+    '</option>'
+  ).join('');
+  sel.disabled = false;
+  sel.onchange = () => loadReport(sel.value);
+}
+
+function renderReport(d) {
+  const parts = String(d.finalScore || '0 - 0').replace(/\s/g, '').split('-');
+  const our   = parseInt(parts[0]) || 0;
+  const their = parseInt(parts[1]) || 0;
+  const result = our > their ? 'W' : our === their ? 'D' : 'L';
+  const resultLabel = result === 'W' ? 'THẮNG' : result === 'D' ? 'HÒA' : 'THUA';
+
+  const fin = d.finance || { totalFee: 0, tongThu: 0, tongConNo: 0, chenhLech: 0 };
+  const deltaCls = fin.chenhLech > 0 ? 'pos' : fin.chenhLech < 0 ? 'neg' : 'zero';
+  const deltaLabel = fin.chenhLech > 0 ? ('+' + fmt(fin.chenhLech) + 'đ')
+                    : fin.chenhLech < 0 ? ('−' + fmt(Math.abs(fin.chenhLech)) + 'đ')
+                    : 'Khớp';
+
+  const scorersHtml = (d.scorers || []).length
+    ? '<div class="rc-chip-list">' + d.scorers.map(p => {
+        const total = p.goals + p.penGoals;
+        const penNote = p.penGoals > 0 ? '<span class="tag-note">(' + p.penGoals + ' pen)</span>' : '';
+        const tagNote = p.tag ? '<span class="tag-note">· ' + p.tag + '</span>' : '';
+        return '<div class="rc-chip">⚽ ' + escapeHtml(p.name) + ' <span class="cnt">x' + total + '</span>' + penNote + tagNote + '</div>';
+      }).join('') + '</div>'
+    : '<div class="rc-empty">Chưa có ai ghi bàn trận này.</div>';
+
+  const assistHtml = (d.assisters || []).length
+    ? '<div class="rc-chip-list">' + d.assisters.map(p =>
+        '<div class="rc-chip assist">🎯 ' + escapeHtml(p.name) + ' <span class="cnt">x' + p.assists + '</span></div>'
+      ).join('') + '</div>'
+    : '<div class="rc-empty">Chưa có ai kiến tạo trận này.</div>';
+
+  const cardsHtml = (d.cards || []).length
+    ? '<div class="rc-chip-list">' + d.cards.map(p => {
+        const yc = p.yellowCards > 0 ? '<span class="yc">🟨x' + p.yellowCards + '</span>' : '';
+        const rc = p.redCards > 0 ? '<span class="rc-red">🟥x' + p.redCards + '</span>' : '';
+        return '<div class="rc-chip">' + escapeHtml(p.name) + ' ' + yc + ' ' + rc + '</div>';
+      }).join('') + '</div>'
+    : '';
+
+  const lateBoomNote = [];
+  if ((d.lateList || []).length) lateBoomNote.push('⏰ Trễ: ' + d.lateList.map(escapeHtml).join(', '));
+  if ((d.boomList || []).length) lateBoomNote.push('💣 Boom: ' + d.boomList.map(escapeHtml).join(', '));
+
+  const debtorsHtml = (d.debtors || []).length
+    ? '<div class="rc-debt-list">' + d.debtors.map(p =>
+        '<div class="rc-debt-row">' +
+          '<div><div class="rc-debt-name">' + escapeHtml(p.name) + '</div>' +
+          (p.reason ? '<div class="rc-debt-reason">' + escapeHtml(p.reason) + '</div>' : '') + '</div>' +
+          '<div class="rc-debt-amt">' + fmt(p.amount) + 'đ</div>' +
+        '</div>'
+      ).join('') + '</div>'
+    : '<div class="rc-empty">✅ Mọi người đã thanh toán đủ trận này!</div>';
+
+  document.getElementById('reportCardWrap').innerHTML = `
+    <div id="reportCard">
+      <div class="rc-brand">⚽ LONGXUYEN FC</div>
+
+      <div class="rc-scoreboard">
+        <div class="rc-team us">
+          <div class="rc-team-name">LXFC</div>
+        </div>
+        <div class="rc-score">
+          <span>${our}</span><span class="sep">:</span><span>${their}</span>
+        </div>
+        <div class="rc-team them">
+          <div class="rc-team-name">${escapeHtml(d.opponent || 'Đối thủ')}</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:-8px;margin-bottom:12px">
+        <span class="rc-result-tag ${result}">${resultLabel}</span>
+      </div>
+
+      <div class="rc-meta">
+        📅 <b>${d.date || ''}</b> &nbsp;·&nbsp; 📍 <b>${escapeHtml(d.stadium || 'Chưa rõ sân')}</b> &nbsp;·&nbsp; 👥 <b>${d.playerCount || 0} người</b>
+        ${lateBoomNote.length ? '<div style="margin-top:6px;font-size:10.5px">' + lateBoomNote.join(' &nbsp;·&nbsp; ') + '</div>' : ''}
+      </div>
+
+      ${d.mvp ? `
+      <div class="rc-mvp">
+        <span class="crown">👑</span>
+        <div><div class="lbl">Cầu thủ xuất sắc nhất</div><div class="nm">${escapeHtml(d.mvp)}</div></div>
+      </div>` : ''}
+
+      <div class="rc-section">
+        <div class="rc-section-title">⚽ Ghi bàn</div>
+        ${scorersHtml}
+      </div>
+
+      <div class="rc-section">
+        <div class="rc-section-title">🎯 Kiến tạo</div>
+        ${assistHtml}
+      </div>
+
+      ${cardsHtml ? `<div class="rc-section">
+        <div class="rc-section-title">🚨 Thẻ phạt</div>
+        ${cardsHtml}
+      </div>` : ''}
+
+      <div class="rc-section">
+        <div class="rc-section-title">💰 Quỹ trận đấu</div>
+        <div class="rc-fin-grid">
+          <div class="rc-fin-box"><div class="flabel">Phí sân</div><div class="fval fee">${fmt(fin.totalFee)}đ</div></div>
+          <div class="rc-fin-box"><div class="flabel">Đã thu tại sân</div><div class="fval thu">${fmt(fin.tongThu)}đ</div></div>
+          <div class="rc-fin-box"><div class="flabel">Còn nợ lại</div><div class="fval no">${fmt(fin.tongConNo)}đ</div></div>
+          <div class="rc-fin-box"><div class="flabel">Chênh lệch quỹ</div><div class="fval delta ${deltaCls}">${deltaLabel}</div></div>
+        </div>
+      </div>
+
+      <div class="rc-section" style="margin-bottom:4px">
+        <div class="rc-section-title">📋 Còn nợ trận này</div>
+        ${debtorsHtml}
+      </div>
+
+      <div class="rc-footer">LONGXUYEN FC · ${d.date || ''}${d.codeVersion ? ' · Bản ' + d.codeVersion : ''}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Lưu ảnh (html2canvas) — chỉ chụp #reportCard, không dính nav/nút bấm ──
+function saveAsImage() {
+  const el = document.getElementById('reportCard');
+  if (!el || typeof html2canvas === 'undefined') {
+    alert('Không thể tạo ảnh — vui lòng chụp màn hình thủ công.');
+    return;
+  }
+  const btn = document.getElementById('btnSaveImg');
+  const oldTxt = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo ảnh...';
+
+  html2canvas(el, { backgroundColor: '#0a2a0a', scale: 2, useCORS: true }).then(canvas => {
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const opp = (currentReport && currentReport.opponent || 'tran').replace(/[^\p{L}\p{N}]+/gu, '_');
+      const dt  = (currentReport && currentReport.date || '').replace(/\//g, '-');
+      a.href = url;
+      a.download = 'LXFC_vs_' + opp + '_' + dt + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      btn.disabled = false;
+      btn.textContent = oldTxt;
+    });
+  }).catch(err => {
+    alert('Lỗi tạo ảnh: ' + err.message + ' — vui lòng chụp màn hình thủ công thay thế.');
+    btn.disabled = false;
+    btn.textContent = oldTxt;
+  });
+}
+
+loadReport('');
+</script>
+</body>
+</html>

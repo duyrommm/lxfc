@@ -245,8 +245,22 @@ function fmt(n) {
 function renderDashboard(d) {
   const fund = d.fundBalance || { thu: 0, chi: 0, balance: 0 };
   const ledger = d.matchFinanceLedger || [];
+  // fundBalance/matchFinanceLedger là field MỚI trong getTeamStats() — nếu Web App vẫn đang chạy
+  // code CŨ (chưa Deploy ▸ New version), field này sẽ hoàn toàn không có (khác với có nhưng =0),
+  // nên phải cảnh báo rõ thay vì lặng lẽ hiện 0đ khiến tưởng nhầm là quỹ trống.
+  const isStale = (typeof d.fundBalance === 'undefined');
 
   document.getElementById('dashboard').innerHTML = `
+
+    ${isStale ? `
+    <div class="card grid-3" style="border-color:#ff9800;background:rgba(255,152,0,0.08)">
+      <div class="card-title" style="color:#ffb74d">⚠️ Web App đang chạy code cũ</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);line-height:1.7">
+        Trang này cần bản Code.gs mới nhất nhưng Web App vẫn đang trả dữ liệu cũ (chưa có Quỹ đội/đối chiếu từng trận/tra công nợ) —
+        số 0đ bên dưới KHÔNG phải là quỹ thật. Vào Apps Script ▸ nút <b>Deploy</b> (góc phải) ▸ <b>Manage deployments</b> ▸
+        bấm ✏️ ở bản deploy Web App ▸ chọn <b>New version</b> ▸ <b>Deploy</b>, rồi tải lại trang này.
+      </div>
+    </div>` : ''}
 
     <!-- ── Quỹ đội ── -->
     <div class="card">
@@ -346,8 +360,16 @@ document.getElementById('debtSearchInput').addEventListener('keypress', function
 
 function renderDebtSearchResult(data) {
   const resultEl = document.getElementById('debtSearchResult');
-  if (!data || !data.found) {
-    resultEl.innerHTML = '<div class="debt-search-msg">Không tìm thấy "' + (data && data.name ? data.name : '') + '" trong danh sách đội — kiểm tra lại chính tả tên.</div>';
+  // Route ?page=debt là MỚI — nếu Web App chưa Deploy bản mới, request này rơi vào nhánh doGet()
+  // khác (trả về dữ liệu Đội Hình chứ không phải công nợ), nên sẽ KHÔNG có field `found` (true/false
+  // rõ ràng) lẫn `timeline`. Phải phân biệt rạch ròi với "tra không ra tên" kẻo tưởng nhầm là gõ sai.
+  const isStale = !data || (typeof data.found === 'undefined' && typeof data.timeline === 'undefined');
+  if (isStale) {
+    resultEl.innerHTML = '<div class="debt-search-msg" style="color:#ffb74d">⚠️ Web App đang chạy code cũ, chưa có tính năng tra công nợ này. Vào Apps Script ▸ Deploy ▸ Manage deployments ▸ ✏️ ▸ New version ▸ Deploy, rồi thử lại.</div>';
+    return;
+  }
+  if (!data.found) {
+    resultEl.innerHTML = '<div class="debt-search-msg">Không tìm thấy "' + (data.name || '') + '" trong danh sách đội — kiểm tra lại chính tả tên.</div>';
     return;
   }
   const debt = data.currentDebt || 0;

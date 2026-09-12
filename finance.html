@@ -128,6 +128,47 @@ body {
 .finance-row .fval.thu { color: #4caf50; }
 .finance-row .fval.chi { color: #f44336; }
 
+/* ── Giao dịch quỹ gần đây (trong thẻ Quỹ đội) ── */
+.fund-recent-title {
+  font-size: 10px; color: rgba(255,255,255,0.35);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin: 14px 0 8px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.fund-recent-list { display: flex; flex-direction: column; gap: 2px; }
+.fund-recent-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; font-size: 11.5px;
+}
+.fund-recent-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.fund-recent-dot.thu { background: #4caf50; }
+.fund-recent-dot.chi { background: #f44336; }
+.fund-recent-text { flex: 1; min-width: 0; overflow: hidden; }
+.fund-recent-cat { color: rgba(255,255,255,0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fund-recent-date { color: rgba(255,255,255,0.3); font-size: 9.5px; margin-top: 1px; }
+.fund-recent-amt { font-weight: 700; font-size: 11.5px; flex-shrink: 0; }
+.fund-recent-amt.thu { color: #4caf50; }
+.fund-recent-amt.chi { color: #f44336; }
+
+/* ── Danh sách nợ quỹ ── */
+.debtor-list { display: flex; flex-direction: column; gap: 7px; max-height: 420px; overflow-y: auto; }
+.debtor-row {
+  padding: 9px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.debtor-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.debtor-name { font-size: 12px; font-weight: 700; color: #fff; }
+.debtor-amt  { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 14px; color: #f44336; flex-shrink: 0; }
+.debtor-charges { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.debtor-charge-item {
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.debtor-charge-amt { color: rgba(255,255,255,0.55); flex-shrink: 0; }
+
 /* ── Đối chiếu quỹ theo từng trận ── */
 .ledger-list { display: flex; flex-direction: column; gap: 7px; max-height: 480px; overflow-y: auto; }
 .ledger-row {
@@ -242,10 +283,15 @@ body {
 function fmt(n) {
   return Number(n).toLocaleString('vi-VN');
 }
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 function renderDashboard(d) {
   const fund = d.fundBalance || { thu: 0, chi: 0, balance: 0 };
   const ledger = d.matchFinanceLedger || [];
+  const recentTx = d.recentTransactions || [];
+  const debtors = d.teamDebtors || [];
   // fundBalance/matchFinanceLedger là field MỚI trong getTeamStats() — nếu Web App vẫn đang chạy
   // code CŨ (chưa Deploy ▸ New version), field này sẽ hoàn toàn không có (khác với có nhưng =0).
   // Không hiện 0đ giả kèm hướng dẫn kỹ thuật cho người dùng thường — chỉ cảnh báo ngắn gọn trên
@@ -279,6 +325,9 @@ function renderDashboard(d) {
         <span class="flabel">Tổng chi</span>
         <span class="fval chi">${fmt(fund.chi)}đ</span>
       </div>
+      ${recentTx.length ? `
+      <div class="fund-recent-title">🕒 Giao dịch gần đây</div>
+      <div class="fund-recent-list" id="fund-recent-list"></div>` : ''}
     </div>
 
     <!-- ── Đối chiếu quỹ theo từng trận ── -->
@@ -286,6 +335,13 @@ function renderDashboard(d) {
       <div class="card-title">🧾 Đối chiếu quỹ theo từng trận</div>
       <div class="card-hint">Phí sân đã nhập lúc lưu trận · Đã thu tiền mặt tại sân · Còn nợ lại · Chênh lệch (dư quỹ / đội phải bù)</div>
       <div class="ledger-list" id="ledger-list"></div>
+    </div>
+
+    <!-- ── Danh sách nợ quỹ ── -->
+    <div class="card grid-3">
+      <div class="card-title">📋 Danh sách đang nợ quỹ</div>
+      <div class="card-hint">Cộng dồn từ mọi trận — kèm vài khoản nợ gần nhất của mỗi người. Tra chi tiết đầy đủ ở ô "Tra công nợ cá nhân" phía trên.</div>
+      <div class="debtor-list" id="debtor-list"></div>
     </div>
 
   `;
@@ -299,9 +355,13 @@ function renderDashboard(d) {
       return;
     }
     ledger.forEach(function(m) {
-      var delta = m.chenhLech || 0;
-      var deltaCls   = delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero';
-      var deltaLabel = delta > 0 ? ('+' + fmt(delta) + 'đ dư') : delta < 0 ? (fmt(Math.abs(delta)) + 'đ đội bù') : 'Khớp';
+      // hasFeeData=false: trận lưu TRƯỚC KHI có tính năng ghi Phí sân — không phải phí sân = 0đ
+      // thật, chỉ đơn giản là chưa có dữ liệu để đối chiếu, nên hiện "—" thay vì 1 con số gây hiểu lầm.
+      var hasFee     = m.hasFeeData !== false;
+      var feeLabel   = hasFee ? (fmt(m.totalFee) + 'đ') : 'chưa có dữ liệu';
+      var delta      = m.chenhLech;
+      var deltaCls   = !hasFee ? 'zero' : delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero';
+      var deltaLabel = !hasFee ? '—' : delta > 0 ? ('+' + fmt(delta) + 'đ dư') : delta < 0 ? (fmt(Math.abs(delta)) + 'đ đội bù') : 'Khớp';
       var row = document.createElement('div');
       row.className = 'ledger-row';
       row.innerHTML =
@@ -310,7 +370,7 @@ function renderDashboard(d) {
           '<div class="ledger-date">' + (m.date || '') + '</div>' +
         '</div>' +
         '<div class="ledger-nums">' +
-          '<span>Phí sân: <strong>' + fmt(m.totalFee) + 'đ</strong></span>' +
+          '<span>Phí sân: <strong>' + feeLabel + '</strong></span>' +
           '<span>Đã thu: <strong>' + fmt(m.tongThu) + 'đ</strong></span>' +
         '</div>' +
         '<div class="ledger-nums">' +
@@ -319,6 +379,47 @@ function renderDashboard(d) {
         '</div>';
       wrap.appendChild(row);
     });
+  })();
+
+  // ── Render giao dịch quỹ gần đây ──
+  (function() {
+    var wrap = document.getElementById('fund-recent-list');
+    if (!wrap) return;
+    wrap.innerHTML = recentTx.map(function(t) {
+      var isThu = t.type === 'Thu';
+      return '<div class="fund-recent-item">' +
+        '<span class="fund-recent-dot ' + (isThu ? 'thu' : 'chi') + '"></span>' +
+        '<span class="fund-recent-text">' +
+          '<div class="fund-recent-cat">' + escapeHtml(t.category || (isThu ? 'Khoản thu' : 'Khoản chi')) + '</div>' +
+          '<div class="fund-recent-date">' + (t.date || '') + '</div>' +
+        '</span>' +
+        '<span class="fund-recent-amt ' + (isThu ? 'thu' : 'chi') + '">' + (isThu ? '+' : '−') + fmt(t.amount) + 'đ</span>' +
+        '</div>';
+    }).join('');
+  })();
+
+  // ── Render danh sách nợ quỹ ──
+  (function() {
+    var wrap = document.getElementById('debtor-list');
+    if (!wrap) return;
+    if (!debtors.length) {
+      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">🎉 Hiện không có ai nợ quỹ.</div>';
+      return;
+    }
+    wrap.innerHTML = debtors.map(function(deb) {
+      var charges = deb.recentCharges || [];
+      var chargesHtml = charges.length ? '<div class="debtor-charges">' + charges.map(function(c) {
+        var label = (c.date ? c.date + ' · ' : '') + 'vs ' + escapeHtml(c.opponent || '') + (c.reason ? ' · ' + escapeHtml(c.reason) : '');
+        return '<div class="debtor-charge-item"><span>' + label + '</span><span class="debtor-charge-amt">+' + fmt(c.amount) + 'đ</span></div>';
+      }).join('') + '</div>' : '';
+      return '<div class="debtor-row">' +
+        '<div class="debtor-head">' +
+          '<span class="debtor-name">' + escapeHtml(deb.name) + '</span>' +
+          '<span class="debtor-amt">' + fmt(deb.amount) + 'đ</span>' +
+        '</div>' +
+        chargesHtml +
+        '</div>';
+    }).join('');
   })();
 
   document.getElementById('updated').textContent =

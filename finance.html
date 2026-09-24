@@ -333,7 +333,7 @@ function renderDashboard(d) {
     <!-- ── Đối chiếu quỹ theo từng trận ── -->
     <div class="card grid-2">
       <div class="card-title">🧾 Đối chiếu quỹ theo từng trận</div>
-      <div class="card-hint">Phí sân đã nhập lúc lưu trận · Đã thu tiền mặt tại sân · Còn nợ lại · Chênh lệch (dư quỹ / đội phải bù)</div>
+      <div class="card-hint">Tổng chi thực tế ghi nhận trong ngày trận (từ Thu/Chi) · Đã thu tiền mặt tại sân · Còn nợ lại · Chênh lệch (dư quỹ / đội phải bù)</div>
       <div class="ledger-list" id="ledger-list"></div>
     </div>
 
@@ -351,17 +351,18 @@ function renderDashboard(d) {
     var wrap = document.getElementById('ledger-list');
     if (!wrap) return;
     if (!ledger.length) {
-      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">Chưa có dữ liệu đối chiếu (chỉ tính từ các trận lưu sau khi có tính năng này).</div>';
+      wrap.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:11px;padding:8px 0">Chưa có dữ liệu đối chiếu (chỉ tính từ các trận có ghi Thu/Chi cùng ngày).</div>';
       return;
     }
     ledger.forEach(function(m) {
-      // hasFeeData=false: trận lưu TRƯỚC KHI có tính năng ghi Phí sân — không phải phí sân = 0đ
-      // thật, chỉ đơn giản là chưa có dữ liệu để đối chiếu, nên hiện "—" thay vì 1 con số gây hiểu lầm.
-      var hasFee     = m.hasFeeData !== false;
-      var feeLabel   = hasFee ? (fmt(m.totalFee) + 'đ') : 'chưa có dữ liệu';
+      // hasExpenseData=false: ngày trận này chưa có khoản "Chi" nào được ghi trong Thu/Chi —
+      // không phải tổng chi = 0đ thật, chỉ đơn giản là chưa có dữ liệu để đối chiếu, nên hiện
+      // "—" thay vì 1 con số gây hiểu lầm.
+      var hasExp     = m.hasExpenseData !== false;
+      var chiLabel   = hasExp ? (fmt(m.tongChi) + 'đ') : 'chưa có dữ liệu';
       var delta      = m.chenhLech;
-      var deltaCls   = !hasFee ? 'zero' : delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero';
-      var deltaLabel = !hasFee ? '—' : delta > 0 ? ('+' + fmt(delta) + 'đ dư') : delta < 0 ? (fmt(Math.abs(delta)) + 'đ đội bù') : 'Khớp';
+      var deltaCls   = !hasExp ? 'zero' : delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero';
+      var deltaLabel = !hasExp ? '—' : delta > 0 ? ('+' + fmt(delta) + 'đ dư') : delta < 0 ? (fmt(Math.abs(delta)) + 'đ đội bù') : 'Khớp';
       var row = document.createElement('div');
       row.className = 'ledger-row';
       row.innerHTML =
@@ -370,7 +371,7 @@ function renderDashboard(d) {
           '<div class="ledger-date">' + (m.date || '') + '</div>' +
         '</div>' +
         '<div class="ledger-nums">' +
-          '<span>Phí sân: <strong>' + feeLabel + '</strong></span>' +
+          '<span>Tổng chi: <strong>' + chiLabel + '</strong></span>' +
           '<span>Đã thu: <strong>' + fmt(m.tongThu) + 'đ</strong></span>' +
         '</div>' +
         '<div class="ledger-nums">' +
